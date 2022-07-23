@@ -1,4 +1,4 @@
-mod binarize;
+mod binarization;
 
 fn main() {
     println!("Hello, world!");
