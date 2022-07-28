@@ -1,4 +1,5 @@
 mod binarization;
+mod convert;
 
 fn main() {
     let mut img = gen_ary(4, 4);
