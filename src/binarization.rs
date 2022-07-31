@@ -1,6 +1,6 @@
 // Vec[y][x]
 
-pub fn conv_to_line(img: &Vec<Vec<u8>>) -> Vec<u8> {
+fn conv_to_line(img: &Vec<Vec<u8>>) -> Vec<u8> {
     let mut ret = Vec::new();
     let x_max = img[0].len();
     let y_max = img.len();
@@ -13,7 +13,7 @@ pub fn conv_to_line(img: &Vec<Vec<u8>>) -> Vec<u8> {
     ret
 }
 
-pub fn conv_from_line(img: &Vec<u8>, x_max: usize) -> Vec<Vec<u8>> {
+fn conv_from_line(img: &Vec<u8>, x_max: usize) -> Vec<Vec<u8>> {
     let mut ret = Vec::new();
     let y_max = img.len() / x_max;
 
@@ -46,8 +46,25 @@ pub fn binarize(img: &mut Vec<Vec<u8>>, threshold: usize) {
     }
 }
 
-// Pタイル法の閾値を求める
-pub fn get_threhsold(img: &mut Vec<Vec<u8>>) -> u8 {
+// 判別分析法の閾値を求める
+fn get_threshold(img: &Vec<Vec<u8>>) -> usize {
+    let histgram = get_histgram(&img);
+
+    let mut threshold = 0;
+    let mut t;
+    let mut t_max = 0.0;
+
+    for i in 0..256 {
+        t = split_histgram(&histgram, i);
+        if t_max < t {
+            t_max = t;
+            threshold = i;
+        }
+    }
+    threshold
+}
+
+fn get_histgram(img: &Vec<Vec<u8>>) -> [usize; 256] {
     let mut histgram = [0; 256];
 
     let x_max = img[0].len();
@@ -58,5 +75,25 @@ pub fn get_threhsold(img: &mut Vec<Vec<u8>>) -> u8 {
             histgram[img[y][x] as usize] += 1;
         }
     }
-    0
+    histgram
+}
+
+fn split_histgram(histgram: &[usize; 256], threshold: usize) -> f64 {
+    let t = threshold as f64;
+
+    let mut sum_black: f64 = 0.0;
+    let mut sum_white: f64 = 0.0;
+    let mut ave_black: f64;
+    let mut ave_white: f64;
+
+    for i in 0..threshold {
+        sum_black += histgram[i] as f64;
+    }
+    ave_black = sum_black / t;
+    for i in threshold..256 {
+        sum_white += histgram[i] as f64;
+    }
+    ave_white = sum_white / (256.0 - t);
+
+    sum_black * sum_white * (ave_white - ave_black) * (ave_white - ave_black)
 }
