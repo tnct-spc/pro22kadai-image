@@ -1,6 +1,6 @@
 // Vec[y][x]
 
-fn conv_to_line(img: &Vec<Vec<u8>>) -> Vec<u8> {
+pub fn conv_to_line(img: &Vec<Vec<usize>>) -> Vec<usize> {
     let mut ret = Vec::new();
     let x_max = img[0].len();
     let y_max = img.len();
@@ -13,7 +13,7 @@ fn conv_to_line(img: &Vec<Vec<u8>>) -> Vec<u8> {
     ret
 }
 
-fn conv_from_line(img: &Vec<u8>, x_max: usize) -> Vec<Vec<u8>> {
+pub fn conv_from_line(img: &Vec<usize>, x_max: usize) -> Vec<Vec<usize>> {
     let mut ret = Vec::new();
     let y_max = img.len() / x_max;
 
@@ -31,7 +31,7 @@ fn conv_from_line(img: &Vec<u8>, x_max: usize) -> Vec<Vec<u8>> {
 }
 
 // threshold: 輝度のしきい値（これ以上は白画素，これ以下は黒画素）
-pub fn binarize(img: &mut Vec<Vec<u8>>, threshold: usize) {
+pub fn binarize(img: &mut Vec<Vec<usize>>, threshold: usize) {
     let p_src = conv_to_line(img);
     let x_max = img[0].len();
     let y_max = img.len();
@@ -83,8 +83,8 @@ fn split_histgram(histgram: &[usize; 256], threshold: usize) -> f64 {
 
     let mut sum_black: f64 = 0.0;
     let mut sum_white: f64 = 0.0;
-    let mut ave_black: f64;
-    let mut ave_white: f64;
+    let ave_black: f64;
+    let ave_white: f64;
 
     for i in 0..threshold {
         sum_black += histgram[i] as f64;
