@@ -1,10 +1,11 @@
 use std::fs::File;
 use std::io::Read;
 
-const ihdr: &[char; 4] = &['I', 'H', 'D', 'R'];
-const plte: &[char; 4] = &['P', 'L', 'T', 'E'];
-const idat: &[char; 4] = &['I', 'D', 'A', 'T'];
-const iend: &[char; 4] = &['I', 'E', 'N', 'D'];
+const TYPE_IHDR: &[char; 4] = &['I', 'H', 'D', 'R'];
+const TYPE_PLTE: &[char; 4] = &['P', 'L', 'T', 'E'];
+const TYPE_TRNS: &[char; 4] = &['t', 'R', 'N', 'S'];
+const TYPE_IDAT: &[char; 4] = &['I', 'D', 'A', 'T'];
+const TYPE_IEND: &[char; 4] = &['I', 'E', 'N', 'D'];
 
 struct GRAYA {
     bright: u8,
@@ -27,13 +28,13 @@ struct DATACHUNK {
     length: u32,
     chunk_type: [char; 4],
     chunk_data: Vec<u8>,
-    crc: [u8; 4],
+    // crc: [u8; 4],
 }
 
 struct PNG {
     image_header: IHDR,
     palette: PLTE,
-    image_data: Vec<IDAT>,
+    image_data: IDAT,
 }
 
 struct IHDR {
@@ -46,31 +47,38 @@ struct IHDR {
     compress_method: u8,
     filter_method: u8,
     interlace_method: u8,
-    crc: [u8; 4],
+    // crc: [u8; 4],
 }
 
 struct PLTE {
     length: u32,
     chunk_type: [char; 4],
     chunk_data: Vec<RGB>,
-    crc: [u8; 4],
+    // crc: [u8; 4],
+}
+
+struct TRNS {
+    length: u32,
+    chunk_type: [char; 4],
+    chunk_data: Vec<u8>,
+    // crc: [u8; 4],
 }
 
 struct IDAT {
     length: u32,
     chunk_type: [char; 4],
     chunk_data: Vec<u8>,
-    crc: [u8; 4],
+    // crc: [u8; 4],
 }
 
 struct IEND {
     length: u32,
     chunk_type: [char; 4],
-    crc: [u8; 4],
+    // crc: [u8; 4],
 }
 
 // Open file and convert to Vec<u8>
-fn file_to_vec(filename: String) -> Vec<u8> {
+pub fn file_to_vec(filename: String) -> Vec<u8> {
     let mut file = File::open(filename).expect("can't open a file!");
 
     let mut data = Vec::new();
@@ -147,7 +155,7 @@ fn get_ihdr(data: &Vec<u8>, offset: usize) -> (IHDR, usize) {
         let chunk_type = get_chunk_type(&data, byte_offset);
         byte_offset += 4;
 
-        if verify_chunk_type(&chunk_type, ihdr) {
+        if verify_chunk_type(&chunk_type, TYPE_IHDR) {
             let image_width = byte_to_u32(&data, byte_offset);
             byte_offset += 4;
             let image_height = byte_to_u32(&data, byte_offset);
@@ -162,7 +170,7 @@ fn get_ihdr(data: &Vec<u8>, offset: usize) -> (IHDR, usize) {
             byte_offset += 1;
             let interlace_method = data[byte_offset];
             byte_offset += 1;
-            let crc = get_crc(&data, byte_offset);
+            // let crc = get_crc(&data, byte_offset);
             return (
                 IHDR {
                     length,
@@ -174,7 +182,7 @@ fn get_ihdr(data: &Vec<u8>, offset: usize) -> (IHDR, usize) {
                     compress_method,
                     filter_method,
                     interlace_method,
-                    crc,
+                    // crc,
                 },
                 byte_offset + 4,
             );
@@ -194,29 +202,34 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> (PLTE, usize) {
         byte_offset += 4;
         let mut chunk_data = Vec::new();
 
-        if verify_chunk_type(&chunk_type, plte) {
+        if verify_chunk_type(&chunk_type, TYPE_PLTE) {
             let mut red = 0;
             let mut green = 0;
-            let mut blue = 0;
+            let mut _blue = 0;
 
             for l in 0..length {
-                if length % 3 == 0 {
-                    red = data[byte_offset + l as usize];
-                } else if length % 3 == 1 {
-                    green = data[byte_offset + l as usize];
-                } else if length % 3 == 2 {
-                    blue = data[byte_offset + l as usize];
-                    chunk_data.push(RGB { red, green, blue });
-                }
+                match length % 3 {
+                    0 => red = data[byte_offset + l as usize],
+                    1 => green = data[byte_offset + l as usize],
+                    2 => {
+                        _blue = data[byte_offset + l as usize];
+                        chunk_data.push(RGB {
+                            red,
+                            green,
+                            blue: _blue,
+                        });
+                    }
+                    _ => println!("Error!"),
+                };
             }
             byte_offset += length as usize;
-            let crc = get_crc(&data, byte_offset);
+            // let crc = get_crc(&data, byte_offset);
             return (
                 PLTE {
                     length,
                     chunk_type,
                     chunk_data,
-                    crc,
+                    // crc,
                 },
                 byte_offset + 4,
             );
@@ -226,9 +239,8 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> (PLTE, usize) {
     }
 }
 
-fn get_idat(data: &Vec<u8>, offset: usize) -> (Vec<IDAT>, usize) {
+fn get_trns(data: &Vec<u8>, offset: usize) -> (TRNS, usize) {
     let mut byte_offset = offset;
-    let mut ret = Vec::new();
 
     loop {
         let length = byte_to_u32(&data, byte_offset);
@@ -237,22 +249,56 @@ fn get_idat(data: &Vec<u8>, offset: usize) -> (Vec<IDAT>, usize) {
         byte_offset += 4;
         let mut chunk_data = Vec::new();
 
-        if verify_chunk_type(&chunk_type, idat) {
+        if verify_chunk_type(&chunk_type, TYPE_TRNS) {
+            for l in 0..length {
+                chunk_data.push(data[byte_offset + l as usize]);
+            }
+            byte_offset += length as usize + 4;
+            // let crc = get_crc(&data, byte_offset);
+            return (
+                TRNS {
+                    length,
+                    chunk_type,
+                    chunk_data,
+                    // crc,
+                },
+                byte_offset + 4,
+            );
+        } else {
+            byte_offset += length as usize + 4;
+        }
+    }
+}
+
+fn get_idat(data: &Vec<u8>, offset: usize) -> (IDAT, usize) {
+    let mut byte_offset = offset;
+
+    let mut chunk_data = Vec::new();
+    let length = 0;
+
+    loop {
+        length += byte_to_u32(&data, byte_offset);
+        byte_offset += 4;
+        let chunk_type = get_chunk_type(&data, byte_offset);
+        byte_offset += 4;
+
+        if verify_chunk_type(&chunk_type, TYPE_IDAT) {
             for l in 0..length {
                 chunk_data.push(data[l as usize]);
             }
             byte_offset += length as usize;
-            let crc = get_crc(&data, byte_offset);
+            // let crc = get_crc(&data, byte_offset);
             byte_offset += 4;
-
-            ret.push(IDAT {
-                length,
-                chunk_type,
-                chunk_data,
-                crc,
-            });
-        } else if verify_chunk_type(&chunk_type, iend) {
-            return (ret, byte_offset + 4);
+        } else if verify_chunk_type(&chunk_type, TYPE_IEND) {
+            return (
+                IDAT {
+                    length,
+                    chunk_type: *TYPE_IDAT,
+                    chunk_data,
+                    // crc,
+                },
+                byte_offset + 4,
+            );
         } else {
             byte_offset += length as usize + 4;
         }
@@ -268,13 +314,13 @@ fn get_iend(data: &Vec<u8>, offset: usize) -> (IEND, usize) {
         let chunk_type = get_chunk_type(&data, byte_offset);
         byte_offset += 4;
 
-        if verify_chunk_type(&chunk_type, iend) {
-            let crc = get_crc(&data, byte_offset);
+        if verify_chunk_type(&chunk_type, TYPE_IEND) {
+            // let crc = get_crc(&data, byte_offset);
             return (
                 IEND {
                     length,
                     chunk_type,
-                    crc,
+                    // crc,
                 },
                 byte_offset + 4,
             );
@@ -284,7 +330,7 @@ fn get_iend(data: &Vec<u8>, offset: usize) -> (IEND, usize) {
     }
 }
 
-fn get_png_data(data: &Vec<u8>) -> PNG {
+pub fn get_png_data(data: Vec<u8>) -> PNG {
     let mut byte_offset = 8;
 
     let ret = get_ihdr(&data, byte_offset);
@@ -299,33 +345,11 @@ fn get_png_data(data: &Vec<u8>) -> PNG {
     let image_data = ret.0;
     byte_offset += ret.1;
 
-    let ret = get_iend(&data, byte_offset);
-    let image_end = ret.0;
-    byte_offset += ret.1;
+    let _ret = get_iend(&data, byte_offset);
 
     PNG {
         image_header,
         palette,
         image_data,
-    }
-}
-
-fn get_pixel_data<T>(png: &PNG) -> T {
-    let color_type = png.image_header.color_type;
-    let palette_length = png.palette.length;
-    let data_length = png.image_header.length;
-
-    //    let mut ret = Vec::new();
-
-    if color_type == 0 {
-        // image is greyscale
-    } else if color_type == 2 {
-        // image is truecolor
-    } else if color_type == 3 {
-        // image is indexcolor, required palette
-    } else if color_type == 4 {
-        // image is greyscale + alpha
-    } else if color_type == 6 {
-        // image is truecolor + alpha
     }
 }
