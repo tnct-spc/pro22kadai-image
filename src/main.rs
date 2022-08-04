@@ -1,5 +1,4 @@
 use convert::{file_to_vec, get_png_data};
-use inflate::inflate_bytes;
 
 mod binarization;
 mod convert;
@@ -102,67 +101,4 @@ fn print_line(ary: &Vec<u8>) {
         print!(", {}", ary[l]);
     }
     println!("]");
-}
-
-fn get_binarized_data(file_data: PNG) -> Vec<usize> {
-    // Encoded data line vector -> decoded pixel line vector
-    let bit_depth = file_data.image_header.bit_depth;
-
-    let pixel_data = inflate_bytes(&file_data.image_data.chunk_data).unwrap();
-
-    match bit_depth {
-        1 | 2 | 4 => ext_bit(pixel_data, bit_depth),
-        8 => convert_vec_type(pixel_data),
-        16 => join_byte(pixel_data),
-        _ => vec![0],
-    }
-}
-
-fn convert_vec_type(pixel_data: Vec<u8>) -> Vec<usize> {
-    let mut ret = Vec::new();
-    for p in pixel_data {
-        ret.push(p as usize);
-    }
-    ret
-}
-
-fn join_byte(pixel_data: Vec<u8>) -> Vec<usize> {
-    let l_max = pixel_data.len();
-
-    let mut ret = Vec::new();
-
-    let mut upper_digit: u16 = 0;
-
-    for l in 0..l_max {
-        match l % 2 {
-            0 => upper_digit = pixel_data[l] as u16,
-            1 => ret.push(((upper_digit << 8) + pixel_data[l] as u16) as usize),
-            _ => {}
-        }
-    }
-    ret
-}
-
-fn ext_bit(pixel_data: Vec<u8>, digit: u8) -> Vec<usize> {
-    let mut mask: u8;
-    let init_mask = generate_mask(digit);
-
-    let mut ret = Vec::new();
-
-    for d in pixel_data {
-        mask = init_mask;
-        for k in 0..(8 / digit) {
-            ret.push(((d & mask) >> ((8 / digit - k - 1) * digit)) as usize);
-            mask >> digit;
-        }
-    }
-    ret
-}
-
-fn generate_mask(digit: u8) -> u8 {
-    let mut mask: u8 = 0x80;
-    for _i in 0..digit {
-        mask |= mask >> 1;
-    }
-    mask
 }
