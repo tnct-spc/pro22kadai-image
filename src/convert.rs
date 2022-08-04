@@ -1,5 +1,8 @@
+use inflate::inflate_bytes;
 use std::fs::File;
 use std::io::Read;
+
+use crate::binarization::conv_from_line;
 
 const TYPE_IHDR: &[char; 4] = &['I', 'H', 'D', 'R'];
 const TYPE_PLTE: &[char; 4] = &['P', 'L', 'T', 'E'];
@@ -31,7 +34,7 @@ struct DATACHUNK {
     // crc: [u8; 4],
 }
 
-struct PNG {
+pub struct PNG {
     image_header: IHDR,
     palette: PLTE,
     image_data: IDAT,
@@ -122,7 +125,7 @@ fn byte_to_u32(data: &Vec<u8>, offset: usize) -> u32 {
     let data_count = data.len();
 
     for l in 4..0 {
-        ret += (data[data_count - l + offset] as usize * 256 ^ (l)) as u32;
+        ret += (data[data_count - l + offset] as usize * 256 ^ l) as u32;
     }
     ret
 }
@@ -205,22 +208,18 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> (PLTE, usize) {
         if verify_chunk_type(&chunk_type, TYPE_PLTE) {
             let mut red = 0;
             let mut green = 0;
-            let mut _blue = 0;
+            let mut blue = 0;
 
             for l in 0..length {
                 match length % 3 {
                     0 => red = data[byte_offset + l as usize],
                     1 => green = data[byte_offset + l as usize],
                     2 => {
-                        _blue = data[byte_offset + l as usize];
-                        chunk_data.push(RGB {
-                            red,
-                            green,
-                            blue: _blue,
-                        });
+                        blue = data[byte_offset + l as usize];
+                        chunk_data.push(RGB { red, green, blue });
                     }
-                    _ => println!("Error!"),
-                };
+                    _ => println!("Err!"),
+                }
             }
             byte_offset += length as usize;
             // let crc = get_crc(&data, byte_offset);
@@ -274,7 +273,7 @@ fn get_idat(data: &Vec<u8>, offset: usize) -> (IDAT, usize) {
     let mut byte_offset = offset;
 
     let mut chunk_data = Vec::new();
-    let length = 0;
+    let mut length = 0;
 
     loop {
         length += byte_to_u32(&data, byte_offset);
@@ -353,3 +352,202 @@ pub fn get_png_data(data: Vec<u8>) -> PNG {
         image_data,
     }
 }
+
+fn get_usized_data(file_data: PNG) -> Vec<Vec<usize>> {
+    // Encoded data line vector -> decoded pixel line vector
+    let bit_depth = file_data.image_header.bit_depth;
+    let color_type = file_data.image_header.color_type;
+    let image_width = convert_image_dimension(file_data.image_header.image_width, color_type);
+
+    let pixel_data = inflate_bytes(&file_data.image_data.chunk_data).unwrap();
+
+    match bit_depth {
+        1 | 2 | 4 => conv_from_line(ext_bit(pixel_data, bit_depth), image_width),
+        8 => conv_from_line(convert_vec_type(pixel_data), image_width),
+        16 => conv_from_line(join_byte(pixel_data), image_width),
+        _ => vec![vec![0]],
+    }
+}
+
+fn convert_vec_type(pixel_data: Vec<u8>) -> Vec<usize> {
+    let mut ret = Vec::new();
+    for p in pixel_data {
+        ret.push(p as usize);
+    }
+    ret
+}
+
+fn join_byte(pixel_data: Vec<u8>) -> Vec<usize> {
+    let l_max = pixel_data.len();
+
+    let mut ret = Vec::new();
+
+    let mut upper_digit: u16 = 0;
+
+    for l in 0..l_max {
+        match l % 2 {
+            0 => upper_digit = pixel_data[l] as u16,
+            1 => ret.push(((upper_digit << 8) + pixel_data[l] as u16) as usize),
+            _ => {}
+        }
+    }
+    ret
+}
+
+fn ext_bit(pixel_data: Vec<u8>, digit: u8) -> Vec<usize> {
+    let mut mask: u8;
+    let init_mask = generate_mask(digit);
+
+    let mut ret = Vec::new();
+
+    for d in pixel_data {
+        mask = init_mask;
+        for k in 0..(8 / digit) {
+            ret.push(((d & mask) >> ((8 / digit - k - 1) * digit)) as usize);
+            mask >> digit;
+        }
+    }
+    ret
+}
+
+fn generate_mask(digit: u8) -> u8 {
+    let mut mask: u8 = 0x80;
+    for _i in 0..digit {
+        mask |= mask >> 1;
+    }
+    mask
+}
+
+// 画像の縦横（画素）を縦横（バイト）に変換する
+fn convert_image_dimension(width: u32, color_type: u8) -> usize {
+    match color_type {
+        0 => (width + 1) as usize,
+        2 => (width * 3 + 1) as usize,
+        3 => (width + 1) as usize,
+        4 => (width * 2 + 1) as usize,
+        6 => (width * 4 + 1) as usize,
+        _ => 0,
+    }
+}
+
+// フィルター外したあとにやる
+fn set_palette(pixel_data: Vec<Vec<usize>>, palette: Vec<RGB>) -> Vec<Vec<usize>> {
+    let mut ret = Vec::new();
+
+    for y in pixel_data {
+        let mut ret_x = Vec::new();
+        for x in y {
+            ret_x.push(palette[x].red as usize);
+            ret_x.push(palette[x].green as usize);
+            ret_x.push(palette[x].blue as usize);
+        }
+        ret.push(ret_x);
+    }
+    ret
+}
+
+fn unfilter(pixel_data: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+    let mut ret = Vec::new();
+
+    let y_max = pixel_data.len();
+    let x_max = pixel_data[0].len();
+
+    for y in 0..y_max {
+        let mut ret_x = Vec::new();
+        let filter_method = pixel_data[y][0];
+
+        match filter_method {
+            0 => {
+                for x in 1..x_max {
+                    ret_x.push(pixel_data[y][x]);
+                }
+            }
+            1 => {
+                ret_x.push(pixel_data[y][1]);
+
+                for x in 2..x_max {
+                    ret_x.push(pixel_data[y][x] + pixel_data[y][x - 1]);
+                }
+            }
+            2 => {
+                if y == 0 {
+                    for x in 1..x_max {
+                        ret_x.push(pixel_data[y][x]);
+                    }
+                } else {
+                    for x in 1..x_max {
+                        ret_x.push(pixel_data[y][x] + pixel_data[y - 1][x]);
+                    }
+                }
+            }
+            3 => {
+                if y == 0 {
+                    ret_x.push(pixel_data[y][1]);
+                    for x in 2..x_max {
+                        ret_x.push(pixel_data[y][x] + pixel_data[y][x - 1] / 2);
+                    }
+                } else {
+                    ret_x.push(pixel_data[y][1] + pixel_data[y - 1][1] / 2);
+                    for x in 2..x_max {
+                        ret_x.push(
+                            pixel_data[y][x] + (pixel_data[y - 1][x] + pixel_data[y][x - 1]) / 2,
+                        );
+                    }
+                }
+            }
+            4 => {
+                if y == 0 {
+                    ret_x.push(paeth_predictor(pixel_data[y][1], 0, 0, 0));
+                    for x in 2..x_max {
+                        ret_x.push(paeth_predictor(
+                            pixel_data[y][x],
+                            pixel_data[y][x - 1],
+                            0,
+                            0,
+                        ));
+                    }
+                } else {
+                    ret_x.push(paeth_predictor(
+                        pixel_data[y][1],
+                        0,
+                        pixel_data[y - 1][1],
+                        0,
+                    ));
+                    for x in 2..x_max {
+                        ret_x.push(paeth_predictor(
+                            pixel_data[y][x],
+                            pixel_data[y][x - 1],
+                            pixel_data[y - 1][x],
+                            pixel_data[y - 1][x - 1],
+                        ));
+                    }
+                }
+            }
+            _ => ret_x.push(0),
+        }
+        ret.push(ret_x);
+    }
+    ret
+}
+
+// a: left
+// b: upper
+// c: left upper
+fn paeth_predictor(x: usize, a: usize, b: usize, c: usize) -> usize {
+    let p = a + b - c;
+    let pa = p.abs_diff(a);
+    let pb = p.abs_diff(b);
+    let pc = p.abs_diff(c);
+
+    if pa <= pb && pa <= pc {
+        x + a
+    } else if pb <= pc {
+        x + b
+    } else {
+        x + c
+    }
+}
+
+// PNGをバイト配列で読み込む
+// 画素部分のデータを取り出す
+//
