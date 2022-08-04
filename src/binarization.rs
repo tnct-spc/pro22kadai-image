@@ -1,6 +1,6 @@
 // Vec[y][x]
 
-pub fn conv_to_line(img: &Vec<Vec<usize>>) -> Vec<usize> {
+pub fn conv_to_line(img: Vec<Vec<usize>>) -> Vec<usize> {
     let mut ret = Vec::new();
     let x_max = img[0].len();
     let y_max = img.len();
@@ -13,7 +13,7 @@ pub fn conv_to_line(img: &Vec<Vec<usize>>) -> Vec<usize> {
     ret
 }
 
-pub fn conv_from_line(img: &Vec<usize>, x_max: usize) -> Vec<Vec<usize>> {
+pub fn conv_from_line(img: Vec<usize>, x_max: usize) -> Vec<Vec<usize>> {
     let mut ret = Vec::new();
     let y_max = img.len() / x_max;
 
@@ -32,14 +32,14 @@ pub fn conv_from_line(img: &Vec<usize>, x_max: usize) -> Vec<Vec<usize>> {
 
 // threshold: 輝度のしきい値（これ以上は白画素，これ以下は黒画素）
 pub fn binarize(img: &mut Vec<Vec<usize>>, threshold: usize) {
-    let p_src = conv_to_line(img);
+    let p_src = conv_to_line(img.clone());
     let x_max = img[0].len();
     let y_max = img.len();
 
     let mut lut = [0; 256];
 
     for i in threshold..256 {
-        lut[i] = 255;
+        lut[i] = 1;
     }
     for i in 0..x_max * y_max {
         img[i / x_max][i % x_max] = lut[p_src[i] as usize];
