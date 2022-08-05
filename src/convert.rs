@@ -550,4 +550,6 @@ fn paeth_predictor(x: usize, a: usize, b: usize, c: usize) -> usize {
 
 // PNGをバイト配列で読み込む
 // 画素部分のデータを取り出す
-//
+// データをinflateする
+// データを2次元vectorにする
+// unfilterする
