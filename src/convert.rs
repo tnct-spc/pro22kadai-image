@@ -35,12 +35,12 @@ struct DATACHUNK {
 }
 
 pub struct PNG {
-    image_header: IHDR,
+    pub image_header: IHDR,
     palette: PLTE,
-    image_data: IDAT,
+    pub image_data: IDAT,
 }
 
-struct IHDR {
+pub struct IHDR {
     length: u32,
     chunk_type: [char; 4],
     image_width: u32,
@@ -53,7 +53,7 @@ struct IHDR {
     // crc: [u8; 4],
 }
 
-struct PLTE {
+pub struct PLTE {
     length: u32,
     chunk_type: [char; 4],
     chunk_data: Vec<RGB>,
@@ -67,10 +67,10 @@ struct TRNS {
     // crc: [u8; 4],
 }
 
-struct IDAT {
+pub struct IDAT {
     length: u32,
     chunk_type: [char; 4],
-    chunk_data: Vec<u8>,
+    pub chunk_data: Vec<u8>,
     // crc: [u8; 4],
 }
 
@@ -149,30 +149,32 @@ fn get_crc(data: &Vec<u8>, offset: usize) -> [u8; 4] {
 }
 
 fn get_ihdr(data: &Vec<u8>, offset: usize) -> (IHDR, usize) {
-    let mut byte_offset = offset;
+    let mut offset = offset;
+
+    println!("Get IHDR");
 
     loop {
-        let length = byte_to_u32(&data, byte_offset);
-        byte_offset += 4;
+        let length = byte_to_u32(&data, offset);
+        offset += 4;
 
-        let chunk_type = get_chunk_type(&data, byte_offset);
-        byte_offset += 4;
+        let chunk_type = get_chunk_type(&data, offset);
+        offset += 4;
 
         if verify_chunk_type(&chunk_type, TYPE_IHDR) {
-            let image_width = byte_to_u32(&data, byte_offset);
-            byte_offset += 4;
-            let image_height = byte_to_u32(&data, byte_offset);
-            byte_offset += 4;
-            let bit_depth = data[byte_offset];
-            byte_offset += 1;
-            let color_type = data[byte_offset];
-            byte_offset += 1;
-            let compress_method = data[byte_offset];
-            byte_offset += 1;
-            let filter_method = data[byte_offset];
-            byte_offset += 1;
-            let interlace_method = data[byte_offset];
-            byte_offset += 1;
+            let image_width = byte_to_u32(&data, offset);
+            offset += 4;
+            let image_height = byte_to_u32(&data, offset);
+            offset += 4;
+            let bit_depth = data[offset];
+            offset += 1;
+            let color_type = data[offset];
+            offset += 1;
+            let compress_method = data[offset];
+            offset += 1;
+            let filter_method = data[offset];
+            offset += 1;
+            let interlace_method = data[offset];
+            offset += 1;
             // let crc = get_crc(&data, byte_offset);
             return (
                 IHDR {
@@ -187,16 +189,18 @@ fn get_ihdr(data: &Vec<u8>, offset: usize) -> (IHDR, usize) {
                     interlace_method,
                     // crc,
                 },
-                byte_offset + 4,
+                offset + 4,
             );
         } else {
-            byte_offset += length as usize + 4;
+            offset += length as usize + 4;
         }
     }
 }
 
 fn get_plte(data: &Vec<u8>, offset: usize) -> (PLTE, usize) {
     let mut byte_offset = offset;
+
+    println!("Get PLTE");
 
     loop {
         let length = byte_to_u32(&data, byte_offset);
@@ -241,6 +245,8 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> (PLTE, usize) {
 fn get_trns(data: &Vec<u8>, offset: usize) -> (TRNS, usize) {
     let mut byte_offset = offset;
 
+    println!("Get tRNS");
+
     loop {
         let length = byte_to_u32(&data, byte_offset);
         byte_offset += 4;
@@ -271,6 +277,8 @@ fn get_trns(data: &Vec<u8>, offset: usize) -> (TRNS, usize) {
 
 fn get_idat(data: &Vec<u8>, offset: usize) -> (IDAT, usize) {
     let mut byte_offset = offset;
+
+    println!("Get IDAT");
 
     let mut chunk_data = Vec::new();
     let mut length = 0;
@@ -329,6 +337,23 @@ fn get_iend(data: &Vec<u8>, offset: usize) -> (IEND, usize) {
     }
 }
 
+pub fn get_png_data2(filename: String) -> Vec<Vec<usize>> {
+    let data: Vec<u8> = file_to_vec(filename);
+    let mut offset = 0;
+
+    loop {
+        let length = byte_to_u32(&data, offset);
+        offset += 4;
+        let chunk_type = get_chunk_type(&data, offset);
+        offset += 4;
+
+        match &chunk_type {
+            TYPE_IHDR => {}
+            _ => print!("Unknown data chunk type"),
+        }
+    }
+}
+
 pub fn get_png_data(data: Vec<u8>) -> PNG {
     let mut byte_offset = 8;
 
@@ -336,9 +361,18 @@ pub fn get_png_data(data: Vec<u8>) -> PNG {
     let image_header = ret.0;
     byte_offset += ret.1;
 
-    let ret = get_plte(&data, byte_offset);
-    let palette = ret.0;
-    byte_offset += ret.1;
+    // let ret = get_plte(&data, byte_offset);
+    // let palette = ret.0;
+    let palette = PLTE {
+        length: 0,
+        chunk_type: *TYPE_PLTE,
+        chunk_data: vec![RGB {
+            red: 0,
+            green: 0,
+            blue: 0,
+        }],
+    };
+    // byte_offset += ret.1;
 
     let ret = get_idat(&data, byte_offset);
     let image_data = ret.0;
@@ -353,8 +387,8 @@ pub fn get_png_data(data: Vec<u8>) -> PNG {
     }
 }
 
-fn get_usized_data(file_data: PNG) -> Vec<Vec<usize>> {
-    // Encoded data line vector -> decoded pixel line vector
+pub fn get_usized_data(file_data: PNG) -> Vec<Vec<usize>> {
+    // Encoded data line vector -> decoded pixel 2D vector
     let bit_depth = file_data.image_header.bit_depth;
     let color_type = file_data.image_header.color_type;
     let image_width = convert_image_dimension(file_data.image_header.image_width, color_type);
@@ -446,7 +480,7 @@ fn set_palette(pixel_data: Vec<Vec<usize>>, palette: Vec<RGB>) -> Vec<Vec<usize>
     ret
 }
 
-fn unfilter(pixel_data: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+pub fn unfilter(pixel_data: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     let mut ret = Vec::new();
 
     let y_max = pixel_data.len();
@@ -548,8 +582,11 @@ fn paeth_predictor(x: usize, a: usize, b: usize, c: usize) -> usize {
     }
 }
 
-// PNGをバイト配列で読み込む
-// 画素部分のデータを取り出す
-// データをinflateする
-// データを2次元vectorにする
-// unfilterする
+fn interlace(pixel_data: Vec<Vec<usize>>, interlace_method: u8) -> Vec<Vec<usize>> {
+    match interlace_method {
+        0 => {}
+        1 => {}
+        _ => println!("Undefined Interlace Method!"),
+    }
+    vec![vec![0]]
+}
