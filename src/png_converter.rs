@@ -1,6 +1,8 @@
 use inflate::inflate_bytes;
+use inflate::InflateWriter;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 
 use crate::binarization::conv_from_line;
 
@@ -67,9 +69,13 @@ struct IEND {
 
 // Chunk Typeを確認する
 fn verify_chunk_type(chunk_type: &[u8; 4], type_ex: &[u8; 4]) -> bool {
-    let mut ret = false;
+    let mut ret = true;
+
+    print!("chunk type: ");
+    print_ary(&chunk_type);
+
     for i in 0..4 {
-        ret |= chunk_type[i] == type_ex[i];
+        ret &= chunk_type[i] == type_ex[i];
     }
     ret
 }
@@ -88,72 +94,81 @@ fn file_to_vec(filename: &str) -> Vec<u8> {
 // 読み込んだファイルのPNG Signatureを照合する関数
 fn is_file_png(data: &Vec<u8>, offset: usize) -> (bool, usize) {
     let mut is_png = false;
-    let mut offset = offset;
+    let mut x = 0;
 
     for i in 0..8 {
         is_png &= data[i] == PNG_SIGNATURE[i];
-        offset += 1;
+        x += 1;
     }
-    (is_png, offset)
+    (is_png, x)
 }
 
 // u8のVecの4バイト分を1つの数値に変換するやつ
 fn byte_to_u32(data: &Vec<u8>, offset: usize) -> (u32, usize) {
     let mut ret: u32 = 0;
+    let mut x = 0;
 
     for i in 0..4 {
         ret += (data[i + offset] as u32) << ((4 - i - 1) * 8);
+        x += 1;
     }
     // println!("ret={}", ret);
-    (ret, offset + 4)
+    (ret, x)
 }
 
 // Chunk Typeを取り出す
 fn get_chunk_type(data: &Vec<u8>, offset: usize) -> ([u8; 4], usize) {
     let mut ret: [u8; 4] = [0; 4];
+    let mut x = 0;
 
     for i in 0..4 {
         ret[i] = data[i + offset];
+        x += 1;
     }
-    (ret, offset + 4)
+    (ret, x)
 }
 
 // CRCを取り出す
 fn get_crc(data: &Vec<u8>, offset: usize) -> ([u8; 4], usize) {
     let mut ret: [u8; 4] = [0; 4];
 
+    println!("Get CRC");
+
     for i in 0..4 {
         ret[i] = data[i + offset];
     }
-    println!("Get CRC");
-    (ret, offset + 4)
+    (ret, 4)
 }
 
 // IHDRを取り出す
 fn get_ihdr(data: &Vec<u8>, offset: usize) -> Result<(IHDR, usize), String> {
     println!("Get IHDR");
+    let mut x = offset;
 
-    let (length, offset) = byte_to_u32(data, offset);
-    let (chunk_type, offset) = get_chunk_type(data, offset);
+    let (length, y) = byte_to_u32(data, x);
+    x += y;
+    let (chunk_type, y) = get_chunk_type(data, x);
+    x += y;
 
-    println!("offset = {}", offset);
     if verify_chunk_type(&chunk_type, TYPE_IHDR) {
-        let (image_width, offset) = byte_to_u32(data, offset);
+        let (image_width, y) = byte_to_u32(data, x);
+        x += y;
+        let (image_height, y) = byte_to_u32(data, x);
+        x += y;
+        let bit_depth = data[x];
+        x += 1;
+        let color_type = data[x];
+        x += 1;
+        let compress_method = data[x];
+        x += 1;
+        let filter_method = data[x];
+        x += 1;
+        let interlace_method = data[x];
+        x += 1;
+        let (_crc, y) = get_crc(data, x);
+        x += y;
 
-        let (image_height, mut offset) = byte_to_u32(data, offset);
-
-        let bit_depth = data[offset];
-        offset += 1;
-        let color_type = data[offset];
-        offset += 1;
-        let compress_method = data[offset];
-        offset += 1;
-        let filter_method = data[offset];
-        offset += 1;
-        let interlace_method = data[offset];
-        offset += 1;
-        let (_crc, offset) = get_crc(data, offset);
-
+        println!("Get IHDR Successflly");
         Ok((
             IHDR {
                 length,
@@ -167,7 +182,7 @@ fn get_ihdr(data: &Vec<u8>, offset: usize) -> Result<(IHDR, usize), String> {
                 interlace_method,
                 // _crc,
             },
-            offset,
+            x - offset,
         ))
     } else {
         Err(String::from("IHDR is not located head of file"))
@@ -177,12 +192,13 @@ fn get_ihdr(data: &Vec<u8>, offset: usize) -> Result<(IHDR, usize), String> {
 // PLTEを取り出す
 fn get_plte(data: &Vec<u8>, offset: usize) -> Result<(PLTE, usize), String> {
     println!("Get PLTE");
+    let mut x = offset;
 
     loop {
-        let (length, offset) = byte_to_u32(data, offset);
-
-        let (chunk_type, mut offset) = get_chunk_type(data, offset);
-
+        let (length, y) = byte_to_u32(data, x);
+        x += y;
+        let (chunk_type, y) = get_chunk_type(data, x);
+        x += y;
         let mut chunk_data: Vec<RGB> = Vec::new();
 
         if verify_chunk_type(&chunk_type, TYPE_PLTE) {
@@ -200,9 +216,10 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> Result<(PLTE, usize), String> {
                     }),
                     _ => return Err(String::from("Mod error")),
                 }
+                x += 1;
             }
-            let (_crc, offset) = get_crc(data, offset);
-
+            let (_crc, y) = get_crc(data, x);
+            x += y;
             return Ok((
                 PLTE {
                     length,
@@ -210,12 +227,13 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> Result<(PLTE, usize), String> {
                     chunk_data,
                     // _crc,
                 },
-                offset,
+                x - offset,
             ));
         } else if verify_chunk_type(&chunk_type, TYPE_IEND) {
+            println!("Got IEND");
             return Err(String::from("PLTE chunk not found"));
         } else {
-            offset += length as usize + 4;
+            x += length as usize + 4;
         }
     }
 }
@@ -223,21 +241,23 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> Result<(PLTE, usize), String> {
 // tRNSを取り出す
 fn get_trns(data: &Vec<u8>, offset: usize) -> Result<(TRNS, usize), String> {
     println!("Get tRNS");
+    let mut x = offset;
 
     loop {
-        let (length, offset) = byte_to_u32(data, offset);
-
-        let (chunk_type, mut offset) = get_chunk_type(data, offset);
-
+        let (length, y) = byte_to_u32(data, x);
+        x += y;
+        let (chunk_type, y) = get_chunk_type(data, x);
+        x += y;
         let mut chunk_data: Vec<u8> = Vec::new();
 
         if verify_chunk_type(&chunk_type, TYPE_TRNS) {
             for i in 0..length {
-                chunk_data.push(data[offset + i as usize]);
-                offset += 1;
+                chunk_data.push(data[x + i as usize]);
+                x += 1;
             }
-            let (_crc, offset) = get_crc(data, offset);
-
+            let (_crc, y) = get_crc(data, x);
+            x += y;
+            println!("Get tRNS Successfully");
             return Ok((
                 TRNS {
                     length,
@@ -245,12 +265,12 @@ fn get_trns(data: &Vec<u8>, offset: usize) -> Result<(TRNS, usize), String> {
                     chunk_data,
                     // _crc,
                 },
-                offset,
+                x - offset,
             ));
         } else if verify_chunk_type(&chunk_type, TYPE_IEND) {
             return Err(String::from("tRNS chunk is not found"));
         } else {
-            offset += length as usize + 4;
+            x += length as usize + 4;
         }
     }
 }
@@ -259,24 +279,27 @@ fn get_trns(data: &Vec<u8>, offset: usize) -> Result<(TRNS, usize), String> {
 fn get_idat(data: &Vec<u8>, offset: usize) -> Result<(IDAT, usize), String> {
     println!("Get IDAT");
 
+    let mut x = offset;
+
     let mut chunk_data = Vec::new();
     let mut length = 0;
 
     loop {
-        let ret = byte_to_u32(data, offset);
+        let ret = byte_to_u32(data, x);
         length += ret.0 as usize;
         println!("length1 = {}", length);
-        let offset = ret.1;
-        let (chunk_type, mut offset) = get_chunk_type(data, offset);
-        // print_ary(&chunk_type);
+        x += ret.1;
+        let (chunk_type, y) = get_chunk_type(data, x);
+        x += y;
 
         if verify_chunk_type(&chunk_type, TYPE_IDAT) {
             println!("Match IDAT");
             for i in 0..length {
                 chunk_data.push(data[offset + i]);
-                offset += 1;
+                x += 1;
             }
-            let (_crc, offset) = get_crc(data, offset);
+            let (_crc, y) = get_crc(data, x);
+            x += y;
         } else if verify_chunk_type(&chunk_type, TYPE_IEND) {
             println!("Match IEND");
             return Ok((
@@ -286,14 +309,11 @@ fn get_idat(data: &Vec<u8>, offset: usize) -> Result<(IDAT, usize), String> {
                     chunk_data,
                     // _crc,
                 },
-                offset,
+                x - offset,
             ));
         } else {
-            // println!("else");
-            println!("length2 = {}", length);
-            offset += length as usize + 4;
+            x += length as usize + 4;
             length = 0;
-            // println!("ofs = {}", offset);
         }
     }
 }
@@ -480,54 +500,55 @@ fn set_palette(pixel_data: Vec<Vec<usize>>, palette: Vec<RGB>) -> Vec<Vec<usize>
 
 pub fn get_pixel_data(filename: &str) -> Result<Vec<Vec<usize>>, String> {
     let data = file_to_vec(filename);
+    println!("File len: {}", data.len());
 
-    let (v, offset) = is_file_png(&data, 0);
+    let mut offset = 0;
+
+    let (v, x) = is_file_png(&data, 0);
     if v {
         return Err(String::from("File is not PNG"));
     }
+    offset += x;
 
-    println!("gpd offset = {}", offset);
-
-    let (ihdr, offset) = get_ihdr(&data, offset).unwrap();
-
-    println!("gpd offset2 = {}", offset);
+    let (ihdr, x) = get_ihdr(&data, offset).unwrap();
+    offset += x;
 
     let image_width = ihdr.image_width;
-
-    println!("image width = {}", image_width);
-
     let bit_depth = ihdr.bit_depth;
     let color_type = ihdr.color_type;
 
     if color_type == 3 {
-        let (plte, offset) = get_plte(&data, offset).unwrap();
+        let (plte, x) = get_plte(&data, offset).unwrap();
+        offset += x;
 
-        let (idat, offset) = get_idat(&data, offset).unwrap();
+        let (idat, x) = get_idat(&data, offset).unwrap();
+        offset += x;
 
-        let pixel_data = set_palette(
-            unfilter(
-                conv_from_line(
-                    ext_bit(inflate_bytes(&idat.chunk_data).unwrap(), bit_depth).unwrap(),
-                    image_width as usize,
-                ),
-                bit_depth as usize,
-            )
-            .unwrap(),
-            plte.chunk_data,
-        );
+        let mut decoder = InflateWriter::new(Vec::new());
+        decoder.write(&idat.chunk_data).unwrap();
+        let pixel_data = decoder.finish().unwrap();
+
+        let true_width = get_image_byte_dimention(image_width, color_type).unwrap();
+
+        let pixel_data = ext_bit(pixel_data, bit_depth).expect("Failed to ext bit");
+        let pixel_data = conv_from_line(pixel_data, true_width);
+        let pixel_data = unfilter(pixel_data, bit_depth as usize).expect("Failed to unfilter");
+        let pixel_data = set_palette(pixel_data, plte.chunk_data);
 
         Ok(pixel_data)
     } else {
-        let (idat, offset) = get_idat(&data, offset).unwrap();
+        let (idat, x) = get_idat(&data, offset).unwrap();
+        offset += x;
 
-        let pixel_data = unfilter(
-            conv_from_line(
-                ext_bit(inflate_bytes(&idat.chunk_data).unwrap(), bit_depth).unwrap(),
-                image_width as usize,
-            ),
-            bit_depth as usize,
-        )
-        .unwrap();
+        let mut decoder = InflateWriter::new(Vec::new());
+        decoder.write(&idat.chunk_data).unwrap();
+        let pixel_data = decoder.finish().unwrap();
+
+        let true_width = get_image_byte_dimention(image_width, color_type).unwrap();
+
+        let pixel_data = ext_bit(pixel_data, bit_depth).expect("Failed to ext bit");
+        let pixel_data = conv_from_line(pixel_data, true_width);
+        let pixel_data = unfilter(pixel_data, bit_depth as usize).expect("Failed to unfilter");
 
         Ok(pixel_data)
     }
