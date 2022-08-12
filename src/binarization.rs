@@ -1,13 +1,15 @@
 // Vec[y][x]
 
-pub fn conv_to_line(img: Vec<Vec<usize>>) -> Vec<usize> {
+use std::vec;
+
+pub fn conv_to_line(img: &Vec<Vec<usize>>) -> Vec<usize> {
     let mut ret = Vec::new();
     let x_max = img[0].len();
     let y_max = img.len();
 
-    for y in 0..y_max {
-        for x in 0..x_max {
-            ret.push(img[y][x]);
+    for line in img {
+        for d in line {
+            ret.push(*d);
         }
     }
     ret
@@ -31,10 +33,14 @@ pub fn conv_from_line(img: Vec<usize>, x_max: usize) -> Vec<Vec<usize>> {
 }
 
 // threshold: 輝度のしきい値（これ以上は白画素，これ以下は黒画素）
-pub fn binarize(img: &mut Vec<Vec<usize>>, threshold: usize) {
-    let p_src = conv_to_line(img.clone());
+pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+    let p_src = conv_to_line(&img);
     let x_max = img[0].len();
     let y_max = img.len();
+
+    let mut ret = vec![vec![0; x_max]; y_max];
+
+    let threshold = get_threshold(&img);
 
     let mut lut = [0; 256];
 
@@ -42,13 +48,14 @@ pub fn binarize(img: &mut Vec<Vec<usize>>, threshold: usize) {
         lut[i] = 1;
     }
     for i in 0..x_max * y_max {
-        img[i / x_max][i % x_max] = lut[p_src[i] as usize];
+        ret[i / x_max][i % x_max] = lut[p_src[i]];
     }
+    ret
 }
 
 // 判別分析法の閾値を求める
-fn get_threshold(img: &Vec<Vec<u8>>) -> usize {
-    let histgram = get_histgram(&img);
+fn get_threshold(img: &Vec<Vec<usize>>) -> usize {
+    let histgram = get_histgram(img);
 
     let mut threshold = 0;
     let mut t;
@@ -64,7 +71,7 @@ fn get_threshold(img: &Vec<Vec<u8>>) -> usize {
     threshold
 }
 
-fn get_histgram(img: &Vec<Vec<u8>>) -> [usize; 256] {
+fn get_histgram(img: &Vec<Vec<usize>>) -> [usize; 256] {
     let mut histgram = [0; 256];
 
     let x_max = img[0].len();

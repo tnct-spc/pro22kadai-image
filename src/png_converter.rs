@@ -1,8 +1,6 @@
-use inflate::inflate_bytes;
-use inflate::InflateWriter;
+use inflate::DeflateDecoderBuf;
 use std::fs::File;
-use std::io::Read;
-use std::io::Write;
+use std::io::{Read, Write};
 
 use crate::binarization::conv_from_line;
 
@@ -17,9 +15,9 @@ const TYPE_IEND: &[u8; 4] = &[73, 69, 78, 68];
 
 // RGBを一つで扱うための構造体
 struct RGB {
-    red: u8,
-    green: u8,
-    blue: u8,
+    red: usize,
+    green: usize,
+    blue: usize,
 }
 
 // イメージヘッダの情報を格納する構造体
@@ -72,7 +70,7 @@ fn verify_chunk_type(chunk_type: &[u8; 4], type_ex: &[u8; 4]) -> bool {
     let mut ret = true;
 
     print!("chunk type: ");
-    print_ary(&chunk_type);
+    print_chunk_type(&chunk_type);
 
     for i in 0..4 {
         ret &= chunk_type[i] == type_ex[i];
@@ -92,7 +90,7 @@ fn file_to_vec(filename: &str) -> Vec<u8> {
 }
 
 // 読み込んだファイルのPNG Signatureを照合する関数
-fn is_file_png(data: &Vec<u8>, offset: usize) -> (bool, usize) {
+fn is_file_png(data: &Vec<u8>) -> (bool, usize) {
     let mut is_png = false;
     let mut x = 0;
 
@@ -207,12 +205,12 @@ fn get_plte(data: &Vec<u8>, offset: usize) -> Result<(PLTE, usize), String> {
 
             for i in 0..length {
                 match i % 3 {
-                    0 => r = data[offset + i as usize],
-                    1 => g = data[offset + i as usize],
+                    0 => r = data[offset + i as usize] as usize,
+                    1 => g = data[offset + i as usize] as usize,
                     2 => chunk_data.push(RGB {
                         red: r,
                         green: g,
-                        blue: data[offset + i as usize],
+                        blue: data[offset + i as usize] as usize,
                     }),
                     _ => return Err(String::from("Mod error")),
                 }
@@ -500,11 +498,11 @@ fn set_palette(pixel_data: Vec<Vec<usize>>, palette: Vec<RGB>) -> Vec<Vec<usize>
 
 pub fn get_pixel_data(filename: &str) -> Result<Vec<Vec<usize>>, String> {
     let data = file_to_vec(filename);
-    println!("File len: {}", data.len());
+    println!("File Size: {} Bytes", data.len());
 
     let mut offset = 0;
 
-    let (v, x) = is_file_png(&data, 0);
+    let (v, x) = is_file_png(&data);
     if v {
         return Err(String::from("File is not PNG"));
     }
@@ -524,11 +522,11 @@ pub fn get_pixel_data(filename: &str) -> Result<Vec<Vec<usize>>, String> {
         let (idat, x) = get_idat(&data, offset).unwrap();
         offset += x;
 
-        let mut decoder = InflateWriter::new(Vec::new());
-        decoder.write(&idat.chunk_data).unwrap();
-        let pixel_data = decoder.finish().unwrap();
-
         let true_width = get_image_byte_dimention(image_width, color_type).unwrap();
+
+        let mut decoder = DeflateDecoderBuf::new(&idat.chunk_data[..]);
+        let mut pixel_data = Vec::new();
+        let _ = decoder.read_to_end(&mut pixel_data);
 
         let pixel_data = ext_bit(pixel_data, bit_depth).expect("Failed to ext bit");
         let pixel_data = conv_from_line(pixel_data, true_width);
@@ -540,12 +538,15 @@ pub fn get_pixel_data(filename: &str) -> Result<Vec<Vec<usize>>, String> {
         let (idat, x) = get_idat(&data, offset).unwrap();
         offset += x;
 
-        let mut decoder = InflateWriter::new(Vec::new());
-        decoder.write(&idat.chunk_data).unwrap();
-        let pixel_data = decoder.finish().unwrap();
-
         let true_width = get_image_byte_dimention(image_width, color_type).unwrap();
 
+        println!("Before inflate size: {}", idat.chunk_data.len());
+
+        let mut decoder = DeflateDecoderBuf::new(idat.chunk_data.as_slice());
+        let mut pixel_data = Vec::new();
+        let _ = decoder.read_to_end(&mut pixel_data);
+
+        println!("After inflate size: {}", pixel_data.len());
         let pixel_data = ext_bit(pixel_data, bit_depth).expect("Failed to ext bit");
         let pixel_data = conv_from_line(pixel_data, true_width);
         let pixel_data = unfilter(pixel_data, bit_depth as usize).expect("Failed to unfilter");
@@ -554,11 +555,9 @@ pub fn get_pixel_data(filename: &str) -> Result<Vec<Vec<usize>>, String> {
     }
 }
 
-fn print_ary(ary: &[u8; 4]) {
-    print!("[");
-
+fn print_chunk_type(ary: &[u8; 4]) {
     for i in 0..4 {
-        print!("{}, ", ary[i]);
+        print!("{}", ary[i] as char);
     }
-    println!("]");
+    println!();
 }

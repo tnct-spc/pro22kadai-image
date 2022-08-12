@@ -1,11 +1,11 @@
 // outline：輪郭線を抽出する
 // img：2値化した配列（黒画素：0，白画素：1）
-fn outline(img: &mut Vec<Vec<u8>>) {
+pub fn outline(img: &mut Vec<Vec<usize>>) {
     let x_max = img[0].len();
     let y_max = img.len();
 
-    for y in 0..y_max {
-        for x in 0..x_max {
+    for y in 1..y_max - 1 {
+        for x in 1..x_max - 1 {
             if img[y][x] > 0
                 && img[y - 1][x] > 0
                 && img[y + 1][x] > 0
