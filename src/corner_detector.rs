@@ -1,50 +1,9 @@
-use std::cell::RefMut;
-
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
 }
 
 const D: usize = 3;
-/*
-// 0 0 0 0 0
-// 1 1 1 0 0
-// 0 0 1 0 0
-// 0 0 1 0 0
-const CORNER1: [[usize; D]; D] = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [1, 1, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-];
-
-// 0 0 0 0 0
-// 0 0 0 0 0
-// 1 1 0 0 0
-// 0 0 1 0 0
-// 0 0 1 0 0
-const CORNER2: [[usize; D]; D] = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [1, 1, 0, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-];
-
-// 0 0 0 0 0
-// 0 0 0 0 0
-// 1 1 0 0 0
-// 0 1 1 0 0
-// 0 0 1 0 0
-const CORNER3: [[usize; D]; D] = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [1, 1, 0, 0, 0],
-    [0, 1, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-];
-*/
 
 // 0 0 0
 // 1 1 0
@@ -61,20 +20,15 @@ const CORNER2: [[usize; D]; D] = [[0, 0, 0], [1, 0, 0], [0, 1, 0]];
 // 1 1 0
 const CORNER3: [[usize; D]; D] = [[0, 0, 0], [1, 0, 0], [1, 1, 0]];
 
-// 1 0 0
-// 0 1 0
-// 0 0 1
-const CORNER4: [[usize; D]; D] = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-
 // 1 0 1
 // 0 1 0
 // 0 0 0
-const CORNER5: [[usize; D]; D] = [[1, 0, 1], [0, 1, 0], [0, 0, 0]];
+const CORNER4: [[usize; D]; D] = [[1, 0, 1], [0, 1, 0], [0, 0, 0]];
 
 // 1 0 0
 // 0 1 1
 // 0 0 0
-const CORNER6: [[usize; D]; D] = [[1, 0, 0], [0, 1, 1], [0, 0, 0]];
+const CORNER5: [[usize; D]; D] = [[1, 0, 0], [0, 1, 1], [0, 0, 0]];
 
 pub fn pick_corner_point(img: &Vec<Vec<usize>>) -> Vec<Coordinate> {
     let ret = apply_filter(img, &CORNER1);
@@ -89,9 +43,6 @@ pub fn pick_corner_point(img: &Vec<Vec<usize>>) -> Vec<Coordinate> {
     let ret = join_vec(ret, r);
 
     let r = apply_filter(img, &CORNER5);
-    let ret = join_vec(ret, r);
-
-    let r = apply_filter(img, &CORNER6);
     let ret = join_vec(ret, r);
 
     ret
