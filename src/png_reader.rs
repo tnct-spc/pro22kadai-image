@@ -1,5 +1,3 @@
-use std::os::windows;
-
 use image::GenericImageView;
 
 pub fn get_pixel_data(
