@@ -1,40 +1,43 @@
 use binarization::binarize;
-use image::GenericImageView;
+use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
 use outline::outline;
 use png_reader::get_pixel_data;
 
 mod binarization;
+mod corner_detector;
 mod outline;
 mod png_reader;
-/* mod png_converter; */
-/* mod zlib; */
+
+const BLACK: &str = "　";
+const WHITE: &str = "鬱";
 
 fn main() {
     let filename = "./ThinkPhone.png";
 
     let (red_pixels, green_pixels, blue_pixels, alpha_pixels) = get_pixel_data(filename);
 
-    let mut red_bin = binarize(red_pixels);
-    let mut green_bin = binarize(green_pixels);
-    let mut blue_bin = binarize(blue_pixels);
-    let mut alpha_bin = binarize(alpha_pixels);
+    let mut red_pixels = binarize(red_pixels);
+    let mut green_pixels = binarize(green_pixels);
+    let mut blue_pixels = binarize(blue_pixels);
+    let mut alpha_pixels = binarize(alpha_pixels);
 
-    outline(&mut red_bin);
-    outline(&mut green_bin);
-    outline(&mut blue_bin);
-    outline(&mut alpha_bin);
+    outline(&mut red_pixels);
+    outline(&mut green_pixels);
+    outline(&mut blue_pixels);
+    outline(&mut alpha_pixels);
 
-    print_ptn(&red_bin);
-    print_ptn(&green_bin);
-    print_ptn(&blue_bin);
-    print_ptn(&alpha_bin);
+    let mut marged_pixels = marge_vec(red_pixels, green_pixels, blue_pixels, alpha_pixels);
 
-    let pixel_data = marge_vec(red_bin, green_bin, blue_bin, alpha_bin);
+    let points = pick_corner_point(&marged_pixels);
 
-    print_ptn(&pixel_data);
+    draw_rectangle(&mut marged_pixels, &points);
+    print_ptn(&marged_pixels);
+
+    // print_coordinates(&points);
+    println!("{} points are found.", points.len());
 }
 
-fn print_ary(ary: &Vec<Vec<usize>>) {
+fn print_vec(ary: &Vec<Vec<usize>>) {
     let x_max = ary[0].len();
     let y_max = ary.len();
 
@@ -47,10 +50,33 @@ fn print_ary(ary: &Vec<Vec<usize>>) {
     }
 }
 
+fn draw_rectangle(ary: &mut Vec<Vec<usize>>, points: &Vec<Coordinate>) {
+    let r = 5;
+    let s = r / 2 + 1;
+    for p in points {
+        for j in 0..r {
+            for i in 0..r {
+                let x = (*p).x;
+                let y = (*p).y;
+
+                if i == 0 || i == r - 1 || j == 0 || j == r - 1 {
+                    ary[y - s + j][x - s + i] = 1;
+                }
+            }
+        }
+    }
+}
+
 fn print_ptn(ary: &Vec<Vec<usize>>) {
-    for y in ary {
-        for x in y {
-            print!("{}", if *x == 0 { "  " } else { "HH" });
+    let x_max = ary[0].len();
+    // let x_max = 500;
+    let y_max = ary.len();
+    // let y_max = 500;
+
+    for y in 0..y_max {
+        for x in 0..x_max {
+            print!("{}", if ary[y][x] == 0 { BLACK } else { WHITE });
+            // print!(("{:3x}",ary[y][x]));
         }
         println!();
     }
