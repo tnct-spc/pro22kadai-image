@@ -2,11 +2,13 @@ use binarization::binarize;
 use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
 use outline::outline;
 use png_reader::get_pixel_data;
+use vec_to_json::vec_to_json;
 
 mod binarization;
 mod corner_detector;
 mod outline;
 mod png_reader;
+mod vec_to_json;
 
 const BLACK: &str = "　";
 const WHITE: &str = "鬱";
@@ -30,10 +32,14 @@ fn main() {
 
     let points = pick_corner_point(&marged_pixels);
 
-    draw_rectangle(&mut marged_pixels, &points);
-    print_ptn(&marged_pixels);
+    // draw_rectangle(&mut marged_pixels, &points);
+    // print_ptn(&marged_pixels);
 
     // print_coordinates(&points);
+
+    let json = vec_to_json(&points);
+    println!("{}", json);
+
     println!("{} points are found.", points.len());
 }
 
