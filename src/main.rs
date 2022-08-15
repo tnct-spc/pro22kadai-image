@@ -1,7 +1,7 @@
 use binarization::binarize;
 use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
 use outline::outline;
-use png_reader::get_pixel_data;
+use png_reader::{get_pixel_data_from_base64, get_pixel_data_from_filename, png_to_base64};
 use vec_to_json::vec_to_json;
 
 mod binarization;
@@ -16,7 +16,15 @@ const WHITE: &str = "鬱";
 fn main() {
     let filename = "./ThinkPhone.png";
 
-    let (red_pixels, green_pixels, blue_pixels, alpha_pixels) = get_pixel_data(filename);
+    let file_data = png_to_base64(filename);
+
+    let ret = get_pixel_data_from_base64(file_data);
+
+    // let ret = get_pixel_data_from_filename(filename);
+    let red_pixels = ret.0;
+    let green_pixels = ret.1;
+    let blue_pixels = ret.2;
+    let alpha_pixels = ret.3;
 
     let mut red_pixels = binarize(red_pixels);
     let mut green_pixels = binarize(green_pixels);
