@@ -6,6 +6,7 @@ use vec_to_json::vec_to_json;
 
 mod binarization;
 mod corner_detector;
+mod get_adjacent;
 mod outline;
 mod png_reader;
 mod vec_to_json;
