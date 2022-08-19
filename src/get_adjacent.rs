@@ -7,35 +7,39 @@ pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> V
 
     for j in 0..s {
         for i in j..s {
-            if is_adjacent(img, &points[i], &points[j]) {
-                ret[i][j] = get_euclid_distance(&points[i], &points[j]);
-                ret[j][i] = get_euclid_distance(&points[i], &points[j]);
-            } else {
-                ret[i][j] = 0;
-                ret[j][i] = 0;
-            }
+            ret[i][j] = is_adjacent(img, &points[i], &points[j]);
         }
     }
     ret
 }
 
-fn is_adjacent(img: &Vec<Vec<usize>>, p1: &Coordinate, p2: &Coordinate) -> bool {
-    let x_max = img[0].len();
-    let y_max = img.len();
+// とりあえず分岐点はないものとする（つまり，1つの特徴点から伸びている辺は2本だけとする）
+// 点どうしが辺でつながっているかどうかを調べる．つながっていた場合はコストを返す，つながっていなかった場合は0を返す
+fn is_adjacent(img: &Vec<Vec<usize>>, start: &Coordinate, goal: &Coordinate) -> usize {
+    let x = start.x;
+    let y = start.y;
 
-    let mut x = p1.x;
-    let mut y = p1.y;
-
-    loop {}
-
-    false
-}
-
-fn get_euclid_distance(p1: &Coordinate, p2: &Coordinate) -> usize {
-    let x1 = p1.x as f64;
-    let y1 = p1.y as f64;
-    let x2 = p2.x as f64;
-    let y2 = p2.y as f64;
-
-    ((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)).sqrt() as usize
+    // Get branches
+    for j in 0..3 {
+        for i in 0..3 {
+            if i != 1 && j != 1 {
+                if img[j][i] == 1 {
+                    let cost = is_adjacent(
+                        img,
+                        &Coordinate {
+                            x: x + i - 1,
+                            y: y + j - 1,
+                        },
+                        goal,
+                    );
+                    if cost == 0 {
+                        return 0;
+                    } else {
+                        return cost + 1;
+                    }
+                }
+            }
+        }
+    }
+    0
 }
