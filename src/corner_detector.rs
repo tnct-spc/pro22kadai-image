@@ -3,6 +3,12 @@ pub struct Coordinate {
     pub y: usize,
 }
 
+impl Coordinate {
+    pub fn new() -> Coordinate {
+        Coordinate { x: 0, y: 0 }
+    }
+}
+
 const D: usize = 3;
 
 // 0 0 0
