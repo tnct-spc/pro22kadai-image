@@ -1,3 +1,7 @@
+use crate::get_adjacent::Vector;
+use std::cmp::Ordering;
+use std::io;
+
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -6,6 +10,30 @@ pub struct Coordinate {
 impl Coordinate {
     pub fn new() -> Coordinate {
         Coordinate { x: 0, y: 0 }
+    }
+    pub fn init(x: usize, y: usize) -> Coordinate {
+        Coordinate { x, y }
+    }
+    pub fn get_vec_from_coordinate(&self, target: Coordinate) -> Vector {
+        let x1 = self.x as isize;
+        let y1 = self.y as isize;
+        let x2 = target.x as isize;
+        let y2 = target.y as isize;
+
+        let mut x;
+        let mut y;
+
+        match x2.cmp(&x1) {
+            Ordering::Greater => x = 1,
+            Ordering::Equal => x = 0,
+            Ordering::Less => x = -1,
+        }
+        match y2.cmp(&y1) {
+            Ordering::Greater => y = 1,
+            Ordering::Equal => y = 0,
+            Ordering::Less => y = -1,
+        }
+        Vector::init(x, y)
     }
 }
 
@@ -82,7 +110,7 @@ fn get_coordinates(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coord
     for y in s..y_max - s {
         for x in s..x_max - s {
             if is_match_filter(img, filter, x, y) {
-                ret.push(Coordinate { x, y });
+                ret.push(Coordinate::init(x, y));
             }
         }
     }
