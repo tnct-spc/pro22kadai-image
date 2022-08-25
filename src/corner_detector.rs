@@ -1,6 +1,10 @@
+use crate::get_adjacent::Orthant;
 use crate::get_adjacent::Vector;
+use std::clone;
 use std::cmp::Ordering;
+use std::cmp::PartialEq;
 use std::io;
+use std::ops::Add;
 
 pub struct Coordinate {
     pub x: usize,
@@ -14,11 +18,11 @@ impl Coordinate {
     pub fn init(x: usize, y: usize) -> Coordinate {
         Coordinate { x, y }
     }
-    pub fn get_vec_from_coordinate(&self, target: Coordinate) -> Vector {
+    pub fn coordinate_to_vec(&self, other: &Self) -> Vector {
         let x1 = self.x as isize;
         let y1 = self.y as isize;
-        let x2 = target.x as isize;
-        let y2 = target.y as isize;
+        let x2 = other.x as isize;
+        let y2 = other.y as isize;
 
         let mut x;
         let mut y;
@@ -34,6 +38,39 @@ impl Coordinate {
             Ordering::Less => y = -1,
         }
         Vector::init(x, y)
+    }
+    pub fn coordinate_to_orthant(&self, other: &Self) -> Orthant {
+        let v = self.coordinate_to_vec(other);
+        v.vec_to_orthant()
+    }
+}
+
+impl PartialEq for Coordinate {
+    fn eq(&self, other: &Self) -> bool {
+        if self.x == other.x && self.y == other.y {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl Add for Coordinate {
+    type Output = Coordinate;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl Clone for Coordinate {
+    fn clone(&self) -> Self {
+        Coordinate {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 
