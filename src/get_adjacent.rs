@@ -1,11 +1,13 @@
 use crate::corner_detector::Coordinate;
 
+use std::cmp::PartialEq;
+
 pub struct Vector {
     x: isize,
     y: isize,
 }
 
-enum Orthant {
+pub enum Orthant {
     Up,
     LeftUp,
     Left,
@@ -63,6 +65,23 @@ impl Vector {
     }
 }
 
+impl PartialEq for Orthant {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Up, Self::Up)
+            | (Self::LeftUp, Self::LeftUp)
+            | (Self::Left, Self::Left)
+            | (Self::LeftDown, Self::LeftDown)
+            | (Self::Down, Self::Down)
+            | (Self::RightDown, Self::RightDown)
+            | (Self::Right, Self::Right)
+            | (Self::RightUp, Self::RightUp)
+            | (Self::Zero, Self::Zero) => true,
+            _ => false,
+        }
+    }
+}
+
 impl Orthant {
     fn orthant_to_vec(&self) -> Vector {
         match self {
@@ -104,19 +123,12 @@ impl PointOnLine {
             direction: Orthant::Zero,
         }
     }
-    fn init(x: usize, y: usize, direction: Orthant) -> PointOnLine {
-        PointOnLine {
-            coord: Coordinate::init(x, y),
-            direction,
-        }
+    fn init(coord: Coordinate, direction: Orthant) -> PointOnLine {
+        PointOnLine { coord, direction }
     }
     fn next(&mut self, img: &Vec<Vec<usize>>) {
-        // hogehoge
-        let direction = self.direction.reverse_orthant();
-
         for o in ORTH_VECS {
-            if o.vec_to_orthant() == self.direction.reverse_orthant() {
-            } else {
+            if o.vec_to_orthant() != self.direction.reverse_orthant() {
                 let x = (self.coord.x as isize + o.x) as usize;
                 let y = (self.coord.y as isize + o.y) as usize;
                 if img[y][x] == 1 {
@@ -135,7 +147,7 @@ pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> V
 
     for j in 0..s {
         for i in j..s {
-            let s = is_adjacent(img, &points[i], &points[j]);
+            let s = is_adjacent(img, points[i].clone(), points[j].clone());
 
             ret[i][j] = s;
             ret[j][i] = s;
@@ -145,11 +157,9 @@ pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> V
 }
 
 // 点どうしが辺でつながっているかどうかを調べる．つながっていた場合はコストを返す，つながっていなかった場合は0を返す
-fn is_adjacent(img: &Vec<Vec<usize>>, start: &Coordinate, goal: &Coordinate) -> usize {
-    let mut current = start;
+fn is_adjacent(img: &Vec<Vec<usize>>, start: Coordinate, goal: Coordinate) -> usize {
+    let init_orth = start.coordinate_to_orthant(&goal).reverse_orthant();
 
-    let mut past_coord = Coordinate::new();
-
-    loop {}
+    let mut current = PointOnLine::init(start, init_orth);
     0
 }
