@@ -2,7 +2,7 @@ use crate::corner_detector::Coordinate;
 
 use std::cmp::PartialEq;
 
-pub struct Vector {
+pub struct Direction {
     x: isize,
     y: isize,
 }
@@ -19,23 +19,23 @@ pub enum Orthant {
     Zero,
 }
 
-const ORTH_VECS: [Vector; 8] = [
-    Vector { x: 0, y: 1 },   // Up
-    Vector { x: 1, y: 1 },   // LeftUp
-    Vector { x: 1, y: 0 },   // Left
-    Vector { x: 1, y: -1 },  // LeftDown
-    Vector { x: 0, y: -1 },  // Down
-    Vector { x: -1, y: -1 }, // RightDown
-    Vector { x: -1, y: 0 },  // Right
-    Vector { x: -1, y: 1 },  // RightUp
+const ORTH_VECS: [Direction; 8] = [
+    Direction { x: 0, y: 1 },   // Up
+    Direction { x: 1, y: 1 },   // LeftUp
+    Direction { x: 1, y: 0 },   // Left
+    Direction { x: 1, y: -1 },  // LeftDown
+    Direction { x: 0, y: -1 },  // Down
+    Direction { x: -1, y: -1 }, // RightDown
+    Direction { x: -1, y: 0 },  // Right
+    Direction { x: -1, y: 1 },  // RightUp
 ];
 
-impl Vector {
-    pub fn new() -> Vector {
-        Vector { x: 0, y: 0 }
+impl Direction {
+    pub fn new() -> Direction {
+        Direction { x: 0, y: 0 }
     }
-    pub fn init(x: isize, y: isize) -> Vector {
-        Vector { x, y }
+    pub fn init(x: isize, y: isize) -> Direction {
+        Direction { x, y }
     }
     pub fn vec_to_orthant(&self) -> Orthant {
         match self.x {
@@ -83,17 +83,17 @@ impl PartialEq for Orthant {
 }
 
 impl Orthant {
-    fn orthant_to_vec(&self) -> Vector {
+    fn orthant_to_vec(&self) -> Direction {
         match self {
-            Orthant::Up => Vector::init(0, 1),
-            Orthant::LeftUp => Vector::init(1, 1),
-            Orthant::Left => Vector::init(1, 0),
-            Orthant::LeftDown => Vector::init(1, -1),
-            Orthant::Down => Vector::init(0, -1),
-            Orthant::RightDown => Vector::init(-1, 0),
-            Orthant::Right => Vector::init(-1, 0),
-            Orthant::RightUp => Vector::init(-1, 1),
-            _ => Vector::init(0, 0),
+            Orthant::Up => Direction::init(0, 1),
+            Orthant::LeftUp => Direction::init(1, 1),
+            Orthant::Left => Direction::init(1, 0),
+            Orthant::LeftDown => Direction::init(1, -1),
+            Orthant::Down => Direction::init(0, -1),
+            Orthant::RightDown => Direction::init(-1, 0),
+            Orthant::Right => Direction::init(-1, 0),
+            Orthant::RightUp => Direction::init(-1, 1),
+            _ => Direction::init(0, 0),
         }
     }
     fn reverse_orthant(&self) -> Orthant {
@@ -106,6 +106,7 @@ impl Orthant {
             Orthant::RightDown => Orthant::LeftUp,
             Orthant::Right => Orthant::Left,
             Orthant::RightUp => Orthant::LeftDown,
+
             _ => Orthant::Zero,
         }
     }
@@ -126,17 +127,26 @@ impl PointOnLine {
     fn init(coord: Coordinate, direction: Orthant) -> PointOnLine {
         PointOnLine { coord, direction }
     }
-    fn next(&mut self, img: &Vec<Vec<usize>>) {
+    fn next(&mut self, img: &Vec<Vec<usize>>) -> bool {
+        let y_max = img.len() as isize;
+        let x_max = img[0].len() as isize;
+
         for o in ORTH_VECS {
             if o.vec_to_orthant() != self.direction.reverse_orthant() {
-                let x = (self.coord.x as isize + o.x) as usize;
-                let y = (self.coord.y as isize + o.y) as usize;
-                if img[y][x] == 1 {
-                    self.coord.x = x;
-                    self.coord.y = y;
+                let x = self.coord.x as isize + o.x;
+                let y = self.coord.y as isize + o.y;
+
+                if x <= 0 || y <= 0 || x > x_max - 1 || y > y_max - 1 {
+                    return false;
+                }
+                if img[y as usize][x as usize] == 1 {
+                    self.coord.x = x as usize;
+                    self.coord.y = y as usize;
+                    return true;
                 }
             }
         }
+        false
     }
 }
 
@@ -147,19 +157,71 @@ pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> V
 
     for j in 0..s {
         for i in j..s {
-            let s = is_adjacent(img, points[i].clone(), points[j].clone());
+            println!("Target points: {}, {}", points[i], points[j]);
 
-            ret[i][j] = s;
-            ret[j][i] = s;
+            let start = points[i];
+            let goal = points[j];
+
+            let init_orth = start.coordinate_to_orthant(&goal).reverse_orthant();
+            let mut current = PointOnLine::init(start, init_orth);
+            let mut cost = 0;
+
+            loop {
+                cost += 1;
+                let s = current.next(img);
+
+                if s {
+                } else {
+                }
+            }
+
+            while current.next(img) {
+                cost += 1;
+
+                if search_points(current.coord, points) > 0 {
+                    ret[i][j] = cost;
+                    ret[j][i] = cost;
+                    break;
+                }
+            }
         }
     }
     ret
 }
 
 // 点どうしが辺でつながっているかどうかを調べる．つながっていた場合はコストを返す，つながっていなかった場合は0を返す
-fn is_adjacent(img: &Vec<Vec<usize>>, start: Coordinate, goal: Coordinate) -> usize {
+fn is_adjacent(
+    img: &Vec<Vec<usize>>,
+    points: &Vec<Coordinate>,
+    start: Coordinate,
+    goal: Coordinate,
+) -> usize {
     let init_orth = start.coordinate_to_orthant(&goal).reverse_orthant();
 
     let mut current = PointOnLine::init(start, init_orth);
+
+    let mut cost = 0;
+
+    while current.next(img) {
+        cost += 1;
+
+        if current.coord == goal {
+            println!("Two points are adjacenting");
+            return cost;
+        }
+        if search_points(current.coord, points) == 0 {
+            println!("Another points are adjacenting");
+            return 0;
+        }
+    }
     0
+}
+
+fn search_points(target: Coordinate, points: &Vec<Coordinate>) -> isize {
+    for (i, p) in points.iter().enumerate() {
+        if target == *p {
+            return i as isize;
+        }
+    }
+    -1
 }

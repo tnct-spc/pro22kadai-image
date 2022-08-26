@@ -1,11 +1,12 @@
+use crate::get_adjacent::Direction;
 use crate::get_adjacent::Orthant;
-use crate::get_adjacent::Vector;
-use std::clone;
 use std::cmp::Ordering;
 use std::cmp::PartialEq;
-use std::io;
+use std::fmt::Display;
 use std::ops::Add;
+use std::ops::Sub;
 
+#[derive(Copy, Clone)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -18,14 +19,14 @@ impl Coordinate {
     pub fn init(x: usize, y: usize) -> Coordinate {
         Coordinate { x, y }
     }
-    pub fn coordinate_to_vec(&self, other: &Self) -> Vector {
+    pub fn coordinate_to_vec(&self, other: &Self) -> Direction {
         let x1 = self.x as isize;
         let y1 = self.y as isize;
         let x2 = other.x as isize;
         let y2 = other.y as isize;
 
-        let mut x;
-        let mut y;
+        let x;
+        let y;
 
         match x2.cmp(&x1) {
             Ordering::Greater => x = 1,
@@ -37,7 +38,7 @@ impl Coordinate {
             Ordering::Equal => y = 0,
             Ordering::Less => y = -1,
         }
-        Vector::init(x, y)
+        Direction::init(x, y)
     }
     pub fn coordinate_to_orthant(&self, other: &Self) -> Orthant {
         let v = self.coordinate_to_vec(other);
@@ -65,12 +66,19 @@ impl Add for Coordinate {
     }
 }
 
-impl Clone for Coordinate {
-    fn clone(&self) -> Self {
-        Coordinate {
-            x: self.x,
-            y: self.y,
+impl Sub for Coordinate {
+    type Output = Coordinate;
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x.abs_diff(rhs.x),
+            y: self.y.abs_diff(rhs.y),
         }
+    }
+}
+
+impl Display for Coordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 

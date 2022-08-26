@@ -1,5 +1,6 @@
 use binarization::binarize;
 use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
+use get_adjacent::get_adjacent_matrix;
 use outline::outline;
 use png_reader::{get_pixel_data_from_base64, get_pixel_data_from_filename, png_to_base64};
 use vec_to_json::vec_to_json;
@@ -37,17 +38,19 @@ fn main() {
     outline(&mut blue_pixels);
     outline(&mut alpha_pixels);
 
-    let mut marged_pixels = marge_vec(red_pixels, green_pixels, blue_pixels, alpha_pixels);
+    let marged_pixels = marge_vec(red_pixels, green_pixels, blue_pixels, alpha_pixels);
 
+    println!("Start to pick up points");
     let points = pick_corner_point(&marged_pixels);
-
-    // draw_rectangle(&mut marged_pixels, &points);
-    // print_ptn(&marged_pixels);
 
     // print_coordinates(&points);
 
-    let json = vec_to_json(&points);
-    println!("{}", json);
+    println!("Start to get adjacent matrix");
+    let adjacent_matrix = get_adjacent_matrix(&marged_pixels, &points);
+    print_vec(&adjacent_matrix);
+
+    // let json = vec_to_json(&points);
+    // println!("{}", json);
 
     println!("{} points are found.", points.len());
 }
