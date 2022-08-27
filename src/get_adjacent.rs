@@ -164,29 +164,25 @@ pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> V
 
             let init_orth = start.coordinate_to_orthant(&goal).reverse_orthant();
             let mut current = PointOnLine::init(start, init_orth);
-            let mut cost = 0;
+            let mut cost: usize = 0;
 
             loop {
                 cost += 1;
                 let s = current.next(img);
-
                 if s {
+                    let p = search_points(current.coord, points);
+                    if p >= 0 {
+                        ret[i][p as usize] = cost;
+                        ret[p as usize][i] = cost;
+                        break;
+                    }
                 } else {
-                }
-            }
-
-            while current.next(img) {
-                cost += 1;
-
-                if search_points(current.coord, points) > 0 {
-                    ret[i][j] = cost;
-                    ret[j][i] = cost;
                     break;
                 }
             }
         }
     }
-    ret
+    return ret;
 }
 
 // 点どうしが辺でつながっているかどうかを調べる．つながっていた場合はコストを返す，つながっていなかった場合は0を返す

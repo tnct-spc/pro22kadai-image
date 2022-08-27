@@ -1,6 +1,7 @@
 use binarization::binarize;
 use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
 use get_adjacent::get_adjacent_matrix;
+use outline::labelling;
 use outline::outline;
 use png_reader::{get_pixel_data_from_base64, get_pixel_data_from_filename, png_to_base64};
 use vec_to_json::vec_to_json;
@@ -16,6 +17,32 @@ const BLACK: &str = "　";
 const WHITE: &str = "鬱";
 
 fn main() {
+    let img = vec![
+        vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+        vec![0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+        vec![0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+        vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+        vec![0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+        vec![0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0],
+        vec![0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+    println!("Before labelling");
+    print_ptn(&img);
+
+    println!("After labelling");
+    let limg = labelling(img);
+    print_ptn(&limg);
+}
+
+fn test_find_points() {
     let filename = "./ThinkPhone.png";
 
     let file_data = png_to_base64(filename);
@@ -60,9 +87,9 @@ fn print_vec(ary: &Vec<Vec<usize>>) {
     let y_max = ary.len();
 
     for y in 0..y_max {
-        print!("[{:02x}", ary[y][0]);
+        print!("[{:02}", ary[y][0]);
         for x in 1..x_max {
-            print!(", {:02x}", ary[y][x]);
+            print!(", {:02}", ary[y][x]);
         }
         println!("],");
     }
@@ -93,8 +120,8 @@ fn print_ptn(ary: &Vec<Vec<usize>>) {
 
     for y in 0..y_max {
         for x in 0..x_max {
-            print!("{}", if ary[y][x] == 0 { BLACK } else { WHITE });
-            // print!(("{:3x}",ary[y][x]));
+            // print!("{}", if ary[y][x] == 0 { BLACK } else { WHITE });
+            print!("{:2}", ary[y][x]);
         }
         println!();
     }
