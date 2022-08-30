@@ -1,7 +1,6 @@
 use binarization::binarize;
 use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
 use get_adjacent::get_adjacent_matrix;
-use outline::labelling;
 use outline::outline;
 use png_reader::{get_pixel_data_from_base64, get_pixel_data_from_filename, png_to_base64};
 use vec_to_json::vec_to_json;
@@ -17,29 +16,7 @@ const BLACK: &str = "　";
 const WHITE: &str = "鬱";
 
 fn main() {
-    let img = vec![
-        vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-        vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
-        vec![0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0],
-        vec![0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0],
-        vec![0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-        vec![0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-        vec![0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-        vec![0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0],
-        vec![0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-        vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-        vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ];
-    println!("Before labelling");
-    print_ptn(&img);
-
-    println!("After labelling");
-    let limg = labelling(img);
-    print_ptn(&limg);
+    test_find_points();
 }
 
 fn test_find_points() {
