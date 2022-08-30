@@ -1,12 +1,8 @@
-use crate::get_adjacent::Direction;
-use crate::get_adjacent::Orthant;
-use std::cmp::Ordering;
 use std::cmp::PartialEq;
 use std::fmt::Display;
 use std::ops::Add;
 use std::ops::Sub;
 
-#[derive(Copy, Clone)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -18,31 +14,6 @@ impl Coordinate {
     }
     pub fn init(x: usize, y: usize) -> Coordinate {
         Coordinate { x, y }
-    }
-    pub fn coordinate_to_vec(&self, other: &Self) -> Direction {
-        let x1 = self.x as isize;
-        let y1 = self.y as isize;
-        let x2 = other.x as isize;
-        let y2 = other.y as isize;
-
-        let x;
-        let y;
-
-        match x2.cmp(&x1) {
-            Ordering::Greater => x = 1,
-            Ordering::Equal => x = 0,
-            Ordering::Less => x = -1,
-        }
-        match y2.cmp(&y1) {
-            Ordering::Greater => y = 1,
-            Ordering::Equal => y = 0,
-            Ordering::Less => y = -1,
-        }
-        Direction::init(x, y)
-    }
-    pub fn coordinate_to_orthant(&self, other: &Self) -> Orthant {
-        let v = self.coordinate_to_vec(other);
-        v.vec_to_orthant()
     }
 }
 
