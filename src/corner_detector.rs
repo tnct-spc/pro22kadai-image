@@ -1,4 +1,8 @@
+use std::cmp::Eq;
+use std::cmp::Ord;
+use std::cmp::Ordering;
 use std::cmp::PartialEq;
+use std::cmp::PartialOrd;
 use std::fmt::Display;
 use std::ops::Add;
 use std::ops::Sub;
@@ -23,6 +27,76 @@ impl PartialEq for Coordinate {
             true
         } else {
             false
+        }
+    }
+}
+
+impl PartialOrd for Coordinate {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self.x > other.x {
+            Some(Ordering::Greater)
+        } else if self.x < other.x {
+            Some(Ordering::Less)
+        } else {
+            Some(Ordering::Equal)
+        }
+    }
+    fn ge(&self, other: &Self) -> bool {
+        self.x >= other.x
+    }
+    fn gt(&self, other: &Self) -> bool {
+        self.x > other.x
+    }
+    fn le(&self, other: &Self) -> bool {
+        self.x <= other.x
+    }
+    fn lt(&self, other: &Self) -> bool {
+        self.x < other.x
+    }
+}
+
+impl Eq for Coordinate {}
+
+impl Ord for Coordinate {
+    fn clamp(self, min: Self, max: Self) -> Self
+    where
+        Self: Sized,
+    {
+        if self.x > max.x {
+            max
+        } else if self.x < min.x {
+            min
+        } else {
+            self
+        }
+    }
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self > other {
+            Ordering::Greater
+        } else if self < other {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
+    }
+    fn max(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
+        if self > other {
+            self
+        } else {
+            other
+        }
+    }
+    fn min(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
+        if self > other {
+            other
+        } else {
+            self
         }
     }
 }
@@ -62,7 +136,7 @@ const CORNER1: [[usize; D]; D] = [[0, 0, 0], [1, 1, 0], [0, 1, 0]];
 
 // 0 0 0
 // 1 0 0
-// 0 1 0
+// 1 1 0
 const CORNER2: [[usize; D]; D] = [[0, 0, 0], [1, 0, 0], [0, 1, 0]];
 
 // 0 0 0
@@ -220,4 +294,8 @@ pub fn print_coordinates(points: &Vec<Coordinate>) {
         }
     }
     println!();
+}
+
+fn sort_points(points: &mut Vec<Coordinate>) {
+    points.sort();
 }
