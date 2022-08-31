@@ -32,6 +32,7 @@ impl Direction {
             7 => Direction::Left,
         }
     }
+    fn direction_to_coordinate(&self, point: Coordinate) {}
 }
 
 impl PartialEq for Direction {
@@ -62,12 +63,9 @@ fn get_chain_code(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) {
     let mut y = 0;
     let mut x = 0;
 
-    while img[y][x] == 0 {
-        x += 1;
-        if x == x_max {
-            y += 1;
-            x = 0;
-        }
+    let mut ret = Vec::<PointChain>::new();
+    for (i, p) in points.iter().enumerate() {
+        let start = *p;
+        for d in 0..8 {}
     }
-    for (i, p) in points.iter().enumerate() {}
 }
