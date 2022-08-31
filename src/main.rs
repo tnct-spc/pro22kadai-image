@@ -9,6 +9,7 @@ mod corner_detector;
 mod outline;
 mod png_reader;
 mod vec_to_json;
+mod merge_points;
 
 const BLACK: &str = "　";
 const WHITE: &str = "鬱";
