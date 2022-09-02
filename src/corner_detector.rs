@@ -1,131 +1,4 @@
-use std::cmp::Eq;
-use std::cmp::Ord;
-use std::cmp::Ordering;
-use std::cmp::PartialEq;
-use std::cmp::PartialOrd;
-use std::fmt::Display;
-use std::ops::Add;
-use std::ops::Sub;
-
-pub struct Coordinate {
-    pub x: usize,
-    pub y: usize,
-}
-
-impl Coordinate {
-    pub fn new() -> Coordinate {
-        Coordinate { x: 0, y: 0 }
-    }
-    pub fn init(x: usize, y: usize) -> Coordinate {
-        Coordinate { x, y }
-    }
-}
-
-impl PartialEq for Coordinate {
-    fn eq(&self, other: &Self) -> bool {
-        if self.x == other.x && self.y == other.y {
-            true
-        } else {
-            false
-        }
-    }
-}
-
-impl PartialOrd for Coordinate {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        if self.x > other.x {
-            Some(Ordering::Greater)
-        } else if self.x < other.x {
-            Some(Ordering::Less)
-        } else {
-            Some(Ordering::Equal)
-        }
-    }
-    fn ge(&self, other: &Self) -> bool {
-        self.x >= other.x
-    }
-    fn gt(&self, other: &Self) -> bool {
-        self.x > other.x
-    }
-    fn le(&self, other: &Self) -> bool {
-        self.x <= other.x
-    }
-    fn lt(&self, other: &Self) -> bool {
-        self.x < other.x
-    }
-}
-
-impl Eq for Coordinate {}
-
-impl Ord for Coordinate {
-    fn clamp(self, min: Self, max: Self) -> Self
-    where
-        Self: Sized,
-    {
-        if self.x > max.x {
-            max
-        } else if self.x < min.x {
-            min
-        } else {
-            self
-        }
-    }
-    fn cmp(&self, other: &Self) -> Ordering {
-        if self > other {
-            Ordering::Greater
-        } else if self < other {
-            Ordering::Less
-        } else {
-            Ordering::Equal
-        }
-    }
-    fn max(self, other: Self) -> Self
-    where
-        Self: Sized,
-    {
-        if self > other {
-            self
-        } else {
-            other
-        }
-    }
-    fn min(self, other: Self) -> Self
-    where
-        Self: Sized,
-    {
-        if self > other {
-            other
-        } else {
-            self
-        }
-    }
-}
-
-impl Add for Coordinate {
-    type Output = Coordinate;
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
-impl Sub for Coordinate {
-    type Output = Coordinate;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Self {
-            x: self.x.abs_diff(rhs.x),
-            y: self.y.abs_diff(rhs.y),
-        }
-    }
-}
-
-impl Display for Coordinate {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
+use crate::coordinate::Coordinate;
 
 const D: usize = 3;
 
@@ -160,14 +33,16 @@ pub fn pick_corner_point(img: &Vec<Vec<usize>>) -> Vec<Coordinate> {
     let r = apply_filter(img, &CORNER2);
     let ret = join_vec(ret, r);
 
-    let r = apply_filter(img, &CORNER3);
-    let ret = join_vec(ret, r);
+    // let r = apply_filter(img, &CORNER3);
+    // let ret = join_vec(ret, r);
 
     let r = apply_filter(img, &CORNER4);
     let ret = join_vec(ret, r);
 
     let r = apply_filter(img, &CORNER5);
-    let ret = join_vec(ret, r);
+    let mut ret = join_vec(ret, r);
+
+    ret.sort();
 
     ret
 }

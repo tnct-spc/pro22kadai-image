@@ -58,11 +58,7 @@ pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     {
         for line in &mut ret {
             for x in line {
-                if *x == 0 {
-                    *x = 1;
-                } else {
-                    *x = 0;
-                }
+                *x = (*x + 1) % 2;
             }
         }
     }

@@ -1,5 +1,3 @@
-use std::{cell::RefMut, cmp::min};
-
 // outline：輪郭線を抽出する
 // img：2値化した配列（黒画素：0，白画素：1）
 pub fn outline(img: &mut Vec<Vec<usize>>) {

@@ -1,4 +1,4 @@
-use crate::corner_detector::Coordinate;
+use crate::coordinate::Coordinate;
 
 /* Format Sample
 { "coordinates": [ { "x": 12, "y": 128 }, { "x": 12, "y": 128 }, ] }

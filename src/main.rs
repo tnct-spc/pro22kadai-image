@@ -1,22 +1,50 @@
 use binarization::binarize;
-use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
+use coordinate::Coordinate;
+use corner_detector::{pick_corner_point, print_coordinates};
 use get_adjacent::get_adjacent_matrix;
 use outline::outline;
-use png_reader::{get_pixel_data_from_base64, get_pixel_data_from_filename, png_to_base64};
+use png_reader::{
+    get_gray_data_from_base64, get_pixel_data_from_base64, get_pixel_data_from_filename,
+    png_to_base64,
+};
 use vec_to_json::vec_to_json;
 
 mod binarization;
+mod coordinate;
 mod corner_detector;
 mod get_adjacent;
 mod outline;
 mod png_reader;
 mod vec_to_json;
 
-const BLACK: &str = "　";
-const WHITE: &str = "鬱";
+const BLACK: &str = " ";
+const WHITE: &str = "*";
 
 fn main() {
-    test_find_points();
+    test_grey_scale();
+}
+
+fn test_grey_scale() {
+    let filename = "./InCaseOfFire2.PNG";
+
+    let filedata = png_to_base64(filename);
+
+    let image_data = get_gray_data_from_base64(filedata);
+
+    let mut image_pixels = binarize(image_data);
+
+    outline(&mut image_pixels);
+
+    // print_ptn(&image_pixels);
+
+    println!("Start to pick points");
+    let points = pick_corner_point(&image_pixels);
+    print_coordinates(&points);
+
+    println!("Start to get adjacent matrix");
+    let adjacent_matrix = get_adjacent_matrix(&points, &image_pixels);
+    // print_vec(&adjacent_matrix);
+    println!("Finished to get adjacent matrix.");
 }
 
 fn test_find_points() {
@@ -47,10 +75,11 @@ fn test_find_points() {
     println!("Start to pick up points");
     let points = pick_corner_point(&marged_pixels);
 
-    // print_coordinates(&points);
+    print_coordinates(&points);
+    println!("{} points are found.", points.len());
 
     println!("Start to get adjacent matrix");
-    let adjacent_matrix = get_adjacent_matrix(&marged_pixels, &points);
+    let adjacent_matrix = get_adjacent_matrix(&points, &marged_pixels);
     print_vec(&adjacent_matrix);
 
     // let json = vec_to_json(&points);
@@ -66,7 +95,7 @@ fn print_vec(ary: &Vec<Vec<usize>>) {
     for y in 0..y_max {
         print!("[{:02}", ary[y][0]);
         for x in 1..x_max {
-            print!(", {:02}", ary[y][x]);
+            print!(", {}", ary[y][x]);
         }
         println!("],");
     }
@@ -97,8 +126,8 @@ fn print_ptn(ary: &Vec<Vec<usize>>) {
 
     for y in 0..y_max {
         for x in 0..x_max {
-            // print!("{}", if ary[y][x] == 0 { BLACK } else { WHITE });
-            print!("{:2}", ary[y][x]);
+            print!("{}", if ary[y][x] == 0 { BLACK } else { WHITE });
+            // print!("{:2}", ary[y][x]);
         }
         println!();
     }
