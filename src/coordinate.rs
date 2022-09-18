@@ -1,5 +1,5 @@
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
-use std::cmp::Ordering::Equal;
+use std::fmt::Display;
 use std::intrinsics::sqrtf64;
 use std::ops::Add;
 
@@ -103,5 +103,11 @@ impl PartialOrd for Coordinate {
     }
     fn ge(&self, other: &Self) -> bool {
         self.abs2() >= other.abs2()
+    }
+}
+
+impl Display for Coordinate {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!("{}, {}", self.x, self.y)
     }
 }
