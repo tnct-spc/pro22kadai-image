@@ -1,5 +1,5 @@
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 use std::intrinsics::sqrtf64;
 use std::ops::Add;
 
@@ -29,6 +29,13 @@ impl Coordinate {
     }
 }
 
+impl Add for Coordinate {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self { x: self.x + rhs.x, y: self.y + rhs.y }
+    }
+}
+
 impl Eq for Coordinate {}
 
 impl PartialEq for Coordinate {
@@ -38,20 +45,6 @@ impl PartialEq for Coordinate {
 }
 
 impl Ord for Coordinate {
-    fn min(self, other: Self) -> Self where Self: Sized {
-        if self.abs2() < other.abs2() {
-            self
-        } else {
-            other
-        }
-    }
-    fn max(self, other: Self) -> Self where Self: Sized {
-        if self.abs2() > other.abs2() {
-            self
-        } else {
-            other
-        }
-    }
     fn cmp(&self, other: &Self) -> Ordering {
         let self_abs = self.abs2();
         let other_abs = other.abs2();
@@ -62,6 +55,20 @@ impl Ord for Coordinate {
             Ordering::Less
         } else {
             Ordering::Equal
+        }
+    }
+    fn max(self, other: Self) -> Self where Self: Sized {
+        if self.abs2() > other.abs2() {
+            self
+        } else {
+            other
+        }
+    }
+    fn min(self, other: Self) -> Self where Self: Sized {
+        if self.abs2() < other.abs2() {
+            self
+        } else {
+            other
         }
     }
     fn clamp(self, min: Self, max: Self) -> Self where Self: Sized {
@@ -108,6 +115,6 @@ impl PartialOrd for Coordinate {
 
 impl Display for Coordinate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!("{}, {}", self.x, self.y)
+        write!(f, "{}, {}", self.x, self.y)
     }
 }
