@@ -1,5 +1,7 @@
+use std::clone::Clone;
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use std::fmt::{Display, Formatter};
+use std::marker::Copy;
 use std::ops::Add;
 
 pub struct Coordinate {
@@ -25,6 +27,17 @@ impl Coordinate {
         let y = self.y;
 
         x * x + y * y
+    }
+}
+
+impl Copy for Coordinate {}
+
+impl Clone for Coordinate {
+    fn clone(&self) -> Self {
+        Self {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 
