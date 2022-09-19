@@ -1,6 +1,5 @@
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use std::fmt::{Display, Formatter};
-use std::intrinsics::sqrtf64;
 use std::ops::Add;
 
 pub struct Coordinate {
@@ -9,13 +8,13 @@ pub struct Coordinate {
 }
 
 impl Coordinate {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { x: 0, y: 0 }
     }
-    fn init(x: usize, y: usize) -> Self {
+    pub fn init(x: usize, y: usize) -> Self {
         Self { x, y }
     }
-    fn abs(&self) -> usize {
+    pub fn abs(&self) -> usize {
         let x = self.x as f64;
         let y = self.y as f64;
 
@@ -32,7 +31,10 @@ impl Coordinate {
 impl Add for Coordinate {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Self { x: self.x + rhs.x, y: self.y + rhs.y }
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
     }
 }
 
@@ -57,21 +59,30 @@ impl Ord for Coordinate {
             Ordering::Equal
         }
     }
-    fn max(self, other: Self) -> Self where Self: Sized {
+    fn max(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
         if self.abs2() > other.abs2() {
             self
         } else {
             other
         }
     }
-    fn min(self, other: Self) -> Self where Self: Sized {
+    fn min(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
         if self.abs2() < other.abs2() {
             self
         } else {
             other
         }
     }
-    fn clamp(self, min: Self, max: Self) -> Self where Self: Sized {
+    fn clamp(self, min: Self, max: Self) -> Self
+    where
+        Self: Sized,
+    {
         let self_abs = self.abs2();
         let min_abs = min.abs2();
         let max_abs = max.abs2();
