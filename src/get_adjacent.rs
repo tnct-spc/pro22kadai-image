@@ -1,5 +1,10 @@
 use crate::coordinate::Coordinate;
 
+struct Direction {
+    x: isize,
+    y: isize,
+}
+
 struct ChainCode {
     start: Coordinate,
     current: Coordinate,
@@ -7,41 +12,56 @@ struct ChainCode {
 }
 
 impl ChainCode {
+    fn init(start_index: usize, start_coordinate: Coordinate) -> ChainCode {
+        ChainCode {
+            start: start_coordinate,
+            current: start_coordinate,
+            chain: vec![start_index],
+        }
+    }
     // 駒を進める
     fn next(&mut self, img: &Vec<Vec<usize>>) {
         let old_direction = self.chain[self.chain.len() - 1].abs_diff(4);
 
         for d in 0..8 {
             if d != old_direction {
-                if is_pixel_white(self.current, img, d) {}
+                if is_pixel_white(self.current, img, d) {
+                    self.current = get_beside_coordinate(self.current, d);
+                    return;
+                }
             }
         }
     }
 }
 
-const D: [[isize; 2]; 8] = [
-    [-1, 1],
-    [0, 1],
-    [1, 1],
-    [1, 0],
-    [1, -1],
-    [0, -1],
-    [-1, -1],
-    [-1, 0],
+const D: [Direction; 8] = [
+    Direction { x: -1, y: 1 },
+    Direction { x: 0, y: 1 },
+    Direction { x: 1, y: 1 },
+    Direction { x: 1, y: 0 },
+    Direction { x: 1, y: -1 },
+    Direction { x: 0, y: -1 },
+    Direction { x: -1, y: -1 },
+    Direction { x: -1, y: 0 },
 ];
 
-fn next_pixel(current_point: Coordinate) {}
+pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+    let y_max = img.len();
+    let x_max = img[0].len();
+    let ret = vec![vec![0; x_max]; y_max];
 
-pub fn get_adjacent_matrix(_points: &Vec<Coordinate>, _img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
-    vec![vec![0]]
+    for (i, p) in points.iter().enumerate() {
+        let mut chain_code = ChainCode::init(i, *p);
+    }
+    ret
 }
 
 fn get_beside_coordinate(current: Coordinate, direction: usize) -> Coordinate {
     let x = current.x as isize;
     let y = current.y as isize;
 
-    let x = x + D[direction][0];
-    let y = y + D[direction][1];
+    let x = x + D[direction].x;
+    let y = y + D[direction].y;
 
     Coordinate {
         x: x as usize,
@@ -57,4 +77,13 @@ fn is_pixel_white(current: Coordinate, img: &Vec<Vec<usize>>, direction: usize) 
     } else {
         false
     }
+}
+
+fn search_points(target: Coordinate, points: &Vec<Coordinate>) -> usize {
+    for (i, p) in points.iter().enumerate() {
+        if *p == target {
+            return i;
+        }
+    }
+    points.len()
 }
