@@ -7,7 +7,7 @@ struct Direction {
 
 struct ChainCode {
     start: Coordinate,
-    current: Coordinate,
+    goal: Coordinate,
     chain: Vec<usize>,
 }
 
@@ -15,7 +15,7 @@ impl ChainCode {
     fn init(start_index: usize, start_coordinate: Coordinate) -> ChainCode {
         ChainCode {
             start: start_coordinate,
-            current: start_coordinate,
+            goal: start_coordinate,
             chain: vec![start_index],
         }
     }
@@ -25,8 +25,8 @@ impl ChainCode {
 
         for d in 0..8 {
             if d != old_direction {
-                if is_pixel_white(self.current, img, d) {
-                    self.current = get_beside_coordinate(self.current, d);
+                if is_pixel_white(self.goal, img, d) {
+                    self.goal = get_beside_coordinate(self.goal, d);
                     return;
                 }
             }
@@ -52,8 +52,24 @@ pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> V
 
     for (i, p) in points.iter().enumerate() {
         let mut chain_code = ChainCode::init(i, *p);
+        chain_code.next(img);
     }
     ret
+}
+
+fn is_pixels_adjacent(start: Coordinate, goal: Coordinate, img: &Vec<Vec<usize>>) -> bool {
+    let ret = false;
+    ret
+}
+
+fn is_pixel_white(current: Coordinate, img: &Vec<Vec<usize>>, direction: usize) -> bool {
+    let new_coord = get_beside_coordinate(current, direction);
+
+    if img[new_coord.y][new_coord.x] > 0 {
+        true
+    } else {
+        false
+    }
 }
 
 fn get_beside_coordinate(current: Coordinate, direction: usize) -> Coordinate {
@@ -66,16 +82,6 @@ fn get_beside_coordinate(current: Coordinate, direction: usize) -> Coordinate {
     Coordinate {
         x: x as usize,
         y: y as usize,
-    }
-}
-
-fn is_pixel_white(current: Coordinate, img: &Vec<Vec<usize>>, direction: usize) -> bool {
-    let new_coord = get_beside_coordinate(current, direction);
-
-    if img[new_coord.y][new_coord.x] > 0 {
-        true
-    } else {
-        false
     }
 }
 
