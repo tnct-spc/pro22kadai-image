@@ -5,91 +5,73 @@ struct Direction {
     y: isize,
 }
 
+impl Direction {
+    fn new(x: isize, y: isize) -> Direction {
+        Direction { x, y }
+    }
+}
+
+
+
+const D: [Direction; 8] = [
+    Direction::new(-1, 1),
+    Direction::new(-1, 0),
+    Direction::new(-1, -1),
+    Direction::new(0, -1),
+    Direction::new(1, -1),
+    Direction::new(1, 0),
+    Direction::new(1, 1),
+    Direction::new(0, 1),
+];
+
 struct ChainCode {
-    start: Coordinate,
-    goal: Coordinate,
-    chain: Vec<usize>,
+    start: usize,
+    goal: usize,
+    cost: usize,
+    old_direction: usize,
 }
 
 impl ChainCode {
-    fn init(start_index: usize, start_coordinate: Coordinate) -> ChainCode {
+    fn new(start: usize) -> ChainCode {
         ChainCode {
-            start: start_coordinate,
-            goal: start_coordinate,
-            chain: vec![start_index],
+            start,
+            goal: start,
+            cost: 0,
+            old_direction: 8,
         }
     }
-    // 駒を進める
-    fn next(&mut self, img: &Vec<Vec<usize>>) {
-        let old_direction = self.chain[self.chain.len() - 1].abs_diff(4);
-
-        for d in 0..8 {
-            if d != old_direction {
-                if is_pixel_white(self.goal, img, d) {
-                    self.goal = get_beside_coordinate(self.goal, d);
-                    return;
-                }
-            }
+    fn next(&self)->ChainCode{for d in 0..8{
+        if self.old_direction!=d{
+            if is_pixel_white(self.goal,D[d]){return ChainCode{start:self.start,goal:}
         }
-    }
+    }}
 }
 
-const D: [Direction; 8] = [
-    Direction { x: -1, y: 1 },
-    Direction { x: 0, y: 1 },
-    Direction { x: 1, y: 1 },
-    Direction { x: 1, y: 0 },
-    Direction { x: 1, y: -1 },
-    Direction { x: 0, y: -1 },
-    Direction { x: -1, y: -1 },
-    Direction { x: -1, y: 0 },
-];
+// Receive image data and points data, and return adjacent matrix.
+pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> Vec<Vec<usize>> {
+    let points_count = points.len();
+    let mut picked_point_count = 0;
 
-pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
-    let y_max = img.len();
-    let x_max = img[0].len();
-    let ret = vec![vec![0; x_max]; y_max];
+    let mut ret = vec![vec![0; points_count]; points_count];
 
-    for (i, p) in points.iter().enumerate() {
-        let mut chain_code = ChainCode::init(i, *p);
-        chain_code.next(img);
+    let mut point_index = 0;
+
+    // Pick up first point
+    let mut p = points[0];
+
+    while picked_point_count == points_count {
+        let chain_code = get_chain_code(p);
+
+        ret[chain_code.start][chain_code.goal] = chain_code.cost;
+        ret[chain_code.goal][chain_code.start] = chain_code.cost;
+
+        p = points[chain_code.goal];
     }
     ret
 }
 
-fn is_pixels_adjacent(start: Coordinate, goal: Coordinate, img: &Vec<Vec<usize>>) -> bool {
-    let ret = false;
-    ret
-}
+fn get_chain_code(start: Coordinate) -> ChainCode {
+    let mut chain_code = ChainCode::new(start);
 
-fn is_pixel_white(current: Coordinate, img: &Vec<Vec<usize>>, direction: usize) -> bool {
-    let new_coord = get_beside_coordinate(current, direction);
 
-    if img[new_coord.y][new_coord.x] > 0 {
-        true
-    } else {
-        false
-    }
-}
-
-fn get_beside_coordinate(current: Coordinate, direction: usize) -> Coordinate {
-    let x = current.x as isize;
-    let y = current.y as isize;
-
-    let x = x + D[direction].x;
-    let y = y + D[direction].y;
-
-    Coordinate {
-        x: x as usize,
-        y: y as usize,
-    }
-}
-
-fn search_points(target: Coordinate, points: &Vec<Coordinate>) -> usize {
-    for (i, p) in points.iter().enumerate() {
-        if *p == target {
-            return i;
-        }
-    }
-    points.len()
 }
