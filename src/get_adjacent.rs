@@ -11,8 +11,6 @@ impl Direction {
     }
 }
 
-
-
 const D: [Direction; 8] = [
     Direction::new(-1, 1),
     Direction::new(-1, 0),
@@ -40,11 +38,14 @@ impl ChainCode {
             old_direction: 8,
         }
     }
-    fn next(&self)->ChainCode{for d in 0..8{
-        if self.old_direction!=d{
-            if is_pixel_white(self.goal,D[d]){return ChainCode{start:self.start,goal:}
+    fn next(&self) -> ChainCode {
+        for d in 0..8 {
+            if self.old_direction != d {
+                
+            }
         }
-    }}
+        ChainCode::new(0)
+    }
 }
 
 // Receive image data and points data, and return adjacent matrix.
@@ -70,8 +71,21 @@ pub fn get_adjacent_matrix(img: &Vec<Vec<usize>>, points: &Vec<Coordinate>) -> V
     ret
 }
 
-fn get_chain_code(start: Coordinate) -> ChainCode {
+fn get_chain_code(start: usize) -> ChainCode {
     let mut chain_code = ChainCode::new(start);
 
+    ChainCode::new(0)
+}
 
+fn get_beside_coordinate(coordinate: Coordinate, direction: Direction) -> Coordinate {
+    let x = coordinate.x as isize;
+    let y = coordinate.y as isize;
+
+    let x = x + direction.x;
+    let y = y + direction.y;
+
+    Coordinate {
+        x: x as usize,
+        y: y as usize,
+    }
 }
