@@ -10,6 +10,7 @@ mod outline;
 mod png_reader;
 mod vec_to_json;
 mod merge_points;
+mod get_bace64_from_url;
 
 const BLACK: &str = "　";
 const WHITE: &str = "鬱";
