@@ -1,3 +1,4 @@
+use std::str::{self, FromStr};
 // 手順
 // 1.urlを受け取る. 形式 : "https://aws/?img=base64データ"
 // 2."https://aws/?img=" を消去.
@@ -21,10 +22,9 @@ pub fn get_bace64_from_specified_url(url: &str) -> std::string::String {
 }
 
 pub fn get_base64_from_url(url: &str) -> String {
-    let query_start = url.find('?').unwrap();
-    // let data_start = url.find("img=").unwrap();
-    let data_start = query_start + 4;
-    let data_end = url.len();
+    let query_start = url.find("?").unwrap();
+    let data_start = url.find("img=").unwrap();
+    let data_end = url.find("&").unwrap();
 
     if query_start < data_start {
         return slice_str(url, data_start, data_end);

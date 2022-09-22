@@ -1,21 +1,32 @@
 use binarization::binarize;
 use corner_detector::{pick_corner_point, print_coordinates, Coordinate};
+use get_base64_from_url::get_base64_from_url;
 use outline::outline;
 use png_reader::{get_pixel_data_from_base64, get_pixel_data_from_filename, png_to_base64};
 use vec_to_json::vec_to_json;
 
 mod binarization;
 mod corner_detector;
+mod get_base64_from_url;
+mod merge_points;
 mod outline;
 mod png_reader;
 mod vec_to_json;
-mod merge_points;
-mod get_bace64_from_url;
 
 const BLACK: &str = "　";
 const WHITE: &str = "鬱";
 
 fn main() {
+    let image = png_to_base64("./ThinkPhone.png");
+
+    let url = format!("https://hogehoge.com/?img={}", image);
+
+    let data = get_base64_from_url(&url);
+
+    println!("{}", data);
+}
+
+fn fake_main() {
     let filename = "./ThinkPhone.png";
 
     let file_data = png_to_base64(filename);
