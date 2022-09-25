@@ -1,10 +1,10 @@
 use binarization::binarize;
 use coordinate::Coordinate;
 use corner_detector::{pick_corner_point, print_coordinates};
-use get_adjacent::get_adjacent_matrix;
+use get_adjacent2::{get_adjacent_matrix, get_beside_pixels};
 use outline::outline;
 use png_reader::{
-    get_gray_data_from_base64, get_pixel_data_from_base64, get_pixel_data_from_filename,
+    get_color_data_from_base64, get_color_data_from_filename, get_gray_data_from_base64,
     png_to_base64,
 };
 use vec_to_json::vec_to_json;
@@ -13,6 +13,7 @@ mod binarization;
 mod coordinate;
 mod corner_detector;
 mod get_adjacent;
+mod get_adjacent2;
 mod outline;
 mod png_reader;
 mod vec_to_json;
@@ -21,7 +22,25 @@ const BLACK: &str = " ";
 const WHITE: &str = "*";
 
 fn main() {
-    test_grey_scale();
+    test_pixels_beside();
+}
+
+fn test_pixels_beside() {
+    let img = vec![
+        vec![0, 0, 0, 0, 0, 0, 0, 0],
+        vec![0, 1, 0, 0, 0, 0, 0, 0],
+        vec![0, 0, 1, 1, 1, 0, 0, 0],
+        vec![0, 0, 0, 0, 1, 0, 0, 0],
+        vec![0, 0, 0, 0, 1, 0, 0, 0],
+        vec![0, 0, 0, 1, 0, 0, 0, 0],
+        vec![0, 0, 0, 1, 0, 0, 0, 0],
+        vec![0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+    let points = vec![Coordinate::init(1, 1), Coordinate::init(3, 6)];
+
+    let (last, cost) = get_beside_pixels(&img, &points);
+
+    println!("last: {}, cost: {}", last, cost);
 }
 
 fn test_grey_scale() {
@@ -52,7 +71,7 @@ fn test_find_points() {
 
     let file_data = png_to_base64(filename);
 
-    let ret = get_pixel_data_from_base64(file_data);
+    let ret = get_color_data_from_base64(file_data);
 
     // let ret = get_pixel_data_from_filename(filename);
     let red_pixels = ret.0;

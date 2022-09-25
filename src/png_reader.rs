@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Read;
 use std::mem::size_of;
 
-pub fn get_pixel_data_from_filename(
+pub fn get_color_data_from_filename(
     filename: &str,
 ) -> (
     Vec<Vec<usize>>,
@@ -43,7 +43,7 @@ pub fn get_pixel_data_from_filename(
     (red_pixels, green_pixels, blue_pixels, alpha_pixels)
 }
 
-pub fn get_pixel_data_from_base64(
+pub fn get_color_data_from_base64(
     filedata: String,
 ) -> (
     Vec<Vec<usize>>,

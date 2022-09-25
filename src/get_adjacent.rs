@@ -1,8 +1,8 @@
 use crate::coordinate::Coordinate;
 
 struct Direction {
-    x: isize,
-    y: isize,
+x: isize,
+                                        y: isize,
 }
 
 impl Direction {
@@ -27,14 +27,14 @@ impl Coordinate {
 }
 
 const D: [Direction; 8] = [
-    Direction::new(-1, 1),
-    Direction::new(-1, 0),
-    Direction::new(-1, -1),
-    Direction::new(0, -1),
-    Direction::new(1, -1),
-    Direction::new(1, 0),
-    Direction::new(1, 1),
-    Direction::new(0, 1),
+    Direction { x: -1, y: 1 },
+    Direction { x: -1, y: 0 },
+    Direction { x: -1, y: -1 },
+    Direction { x: 0, y: -1 },
+    Direction { x: 1, y: -1 },
+    Direction { x: 1, y: 0 },
+    Direction { x: 1, y: 1 },
+    Direction { x: 0, y: 1 },
 ];
 
 struct ChainCode {
@@ -102,5 +102,5 @@ fn search_pixel(target: Coordinate, points: &Vec<Coordinate>) -> isize {
             return i as isize;
         }
     }
-    return -1;
+    -1
 }
