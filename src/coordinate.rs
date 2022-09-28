@@ -139,6 +139,6 @@ impl PartialOrd for Coordinate {
 
 impl Display for Coordinate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}, {}", self.x, self.y)
+        write!(f, "({}, {})", self.x, self.y)
     }
 }

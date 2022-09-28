@@ -43,6 +43,26 @@ pub fn get_color_data_from_filename(
     (red_pixels, green_pixels, blue_pixels, alpha_pixels)
 }
 
+pub fn get_gray_data_from_filename(filename: &str) -> Vec<Vec<usize>> {
+    let img = image::open(filename).unwrap().to_luma8();
+
+    let image_width = img.width();
+    let image_height = img.height();
+
+    let mut image_data = Vec::new();
+
+    for y in 0..image_height {
+        let mut line_data = Vec::<usize>::new();
+
+        for x in 0..image_width {
+            let d = img.get_pixel(x, y);
+            line_data.push(d[0] as usize);
+        }
+        image_data.push(line_data);
+    }
+    image_data
+}
+
 pub fn get_color_data_from_base64(
     filedata: String,
 ) -> (
