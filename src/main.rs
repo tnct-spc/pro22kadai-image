@@ -9,10 +9,9 @@ use png_reader::{
     get_color_data_from_base64, get_color_data_from_filename, get_gray_data_from_base64,
     png_to_base64,
 };
+use print::print_points;
 use print::{print_adjacent_matrix, print_ptn, print_vec};
 use vec_to_json::vec_to_json;
-
-use crate::print::print_points;
 
 mod binarization;
 mod coordinate;
