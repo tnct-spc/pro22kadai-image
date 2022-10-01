@@ -14,14 +14,14 @@ impl NoizeFilter {
         NoizeFilter { before, after }
     }
     fn flip_horizontal(&self) -> Self {
-        let before = flip_matrix_horizontal(&self.before);
-        let after = flip_matrix_horizontal(&self.after);
+        let before = flip_filter_horizontal(&self.before);
+        let after = flip_filter_horizontal(&self.after);
 
         NoizeFilter { before, after }
     }
     fn flip_vertical(&self) -> Self {
-        let before = flip_matrix_vertical(&self.before);
-        let after = flip_matrix_vertical(&self.after);
+        let before = flip_filter_vertical(&self.before);
+        let after = flip_filter_vertical(&self.after);
 
         NoizeFilter { before, after }
     }
@@ -80,15 +80,15 @@ pub fn noize_erase(img: &mut Vec<Vec<usize>>) {
 fn apply_corner_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordinate> {
     let detected_points = get_coordinates(img, filter);
 
-    let filter = flip_matrix_horizontal(filter);
+    let filter = flip_filter_horizontal(filter);
     let ret = get_coordinates(img, &filter);
     let detected_points = join_vec(detected_points, ret);
 
-    let filter = flip_matrix_vertical(&filter);
+    let filter = flip_filter_vertical(&filter);
     let ret = get_coordinates(img, &filter);
     let detected_points = join_vec(detected_points, ret);
 
-    let filter = flip_matrix_horizontal(&filter);
+    let filter = flip_filter_horizontal(&filter);
     let ret = get_coordinates(img, &filter);
     let detected_points = join_vec(detected_points, ret);
 
@@ -169,7 +169,7 @@ fn join_vec<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
     ret
 }
 
-fn flip_matrix_horizontal(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
+fn flip_filter_horizontal(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
     let mut ret = [[0; D]; D];
 
     for y in 0..D {
@@ -180,7 +180,7 @@ fn flip_matrix_horizontal(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
     ret
 }
 
-fn flip_matrix_vertical(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
+fn flip_filter_vertical(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
     let mut ret = [[0; D]; D];
 
     for y in 0..D {
@@ -191,7 +191,7 @@ fn flip_matrix_vertical(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
     ret
 }
 
-fn flip_matrix(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
+fn flip_filter(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
     let mut ret = [[0; D]; D];
 
     for y in 0..D {
@@ -221,8 +221,4 @@ pub fn print_coordinates(points: &Vec<Coordinate>) {
         }
     }
     println!();
-}
-
-fn sort_points(points: &mut Vec<Coordinate>) {
-    points.sort();
 }
