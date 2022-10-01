@@ -2,12 +2,10 @@ use binarization::binarize;
 use coordinate::Coordinate;
 use corner_detector::{noize_erase, pick_corner_point, print_coordinates};
 use get_adjacent::get_adjacent_matrix;
-use get_base64_from_url::get_base64_from_url;
 use outline::outline;
 use png_reader::get_gray_data_from_filename;
 use png_reader::{
     get_color_data_from_base64, get_color_data_from_filename, get_gray_data_from_base64,
-    png_to_base64,
 };
 use print::print_points;
 use print::{print_adjacent_matrix, print_ptn, print_vec};
@@ -17,7 +15,6 @@ mod binarization;
 mod coordinate;
 mod corner_detector;
 mod get_adjacent;
-mod get_base64_from_url;
 mod merge_points;
 mod outline;
 mod png_reader;
