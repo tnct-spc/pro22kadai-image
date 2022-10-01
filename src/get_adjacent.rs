@@ -1,4 +1,5 @@
-use crate::Coordinate;
+use crate::adjacent_points::AdjacentPoints;
+use crate::coordinate::Coordinate;
 use std::clone::Clone;
 use std::marker::Copy;
 
@@ -54,28 +55,23 @@ const D: [Direction; 8] = [
     Direction { x: 0, y: 1 },
 ];
 
-pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<AdjacentPoints> {
     let points_count = points.len();
+
+    let mut ret = Vec::<AdjacentPoints>::new();
 
     println!("{} Points are found", points_count);
 
-    let mut adjacent_matrix = vec![vec![0; points_count]; points_count];
-
-    let mut lut = vec![100; points_count];
+    let mut past_directions = vec![100; points_count];
 
     for i in 0..points_count {
-        print!("[{:4}] ", i); // ←ここで止まる
-        print!("{}----", points[i]);
-        let (target, distance, direction) = get_beside_pixels(i, lut[i], img, points);
-        lut[target] = direction;
+        let (target, distance, direction) = get_beside_pixels(i, past_directions[i], img, points);
+        past_directions[target] = direction;
 
-        print!("[{:4}] {}", target, points[target]);
-        adjacent_matrix[i][target] = distance;
-        adjacent_matrix[target][i] = distance;
-        println!("\tDistance: {:4}", distance);
+        ret.push(AdjacentPoints::new(i, target, distance));
     }
     println!("Finished to get adjacent matrix");
-    adjacent_matrix
+    ret
 }
 
 pub fn get_beside_pixels(
@@ -98,15 +94,21 @@ pub fn get_beside_pixels(
         }
         target_index = search_point(target_point, points);
     }
-    let distance = euclid_distance(points[target], points[target_index as usize]);
+    let distance = manhattan_distance(points[target], points[target_index as usize]);
     (target_index as usize, distance, direction)
 }
 
-fn euclid_distance(a: Coordinate, b: Coordinate) -> usize {
+pub fn euclid_distance(a: Coordinate, b: Coordinate) -> usize {
     let x = a.x.abs_diff(b.x) as f64;
     let y = a.y.abs_diff(b.y) as f64;
 
     (x * x + y * y).sqrt() as usize
+}
+
+pub fn manhattan_distance(a: Coordinate, b: Coordinate) -> usize {
+    let x = a.x.abs_diff(b.x);
+    let y = a.y.abs_diff(b.y);
+    x + y
 }
 
 fn point_next(

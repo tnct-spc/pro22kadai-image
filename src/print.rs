@@ -1,3 +1,4 @@
+use crate::adjacent_points::{self, AdjacentPoints};
 use crate::coordinate::Coordinate;
 
 const BLACK: &str = " ";
@@ -39,5 +40,11 @@ pub fn print_adjacent_matrix(adjacent_matrix: &Vec<Vec<usize>>) {
 pub fn print_points(points: &Vec<Coordinate>) {
     for p in points {
         println!("{}", *p);
+    }
+}
+
+pub fn print_adjacent_points(adjacent_points: &Vec<AdjacentPoints>) {
+    for p in adjacent_points {
+        println!("{}", p);
     }
 }

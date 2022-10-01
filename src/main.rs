@@ -13,19 +13,23 @@ use print::print_points;
 use print::{print_adjacent_matrix, print_ptn, print_vec};
 use vec_to_json::vec_to_json;
 
+use crate::print::print_adjacent_points;
+
+mod adjacent_points;
 mod binarization;
 mod coordinate;
 mod corner_detector;
 mod get_adjacent;
 mod get_base64_from_url;
-mod merge_points;
+// mod merge_points;
+mod merge_points_2;
 mod outline;
 mod png_reader;
 mod print;
 mod vec_to_json;
 
 fn main() {
-    let img = get_gray_data_from_filename("nut_logo.gif");
+    let img = get_gray_data_from_filename("ThinkPhone.png");
     let mut img = binarize(img);
     outline(&mut img);
     noize_erase(&mut img);
@@ -34,6 +38,7 @@ fn main() {
     println!("Points: ");
     print_points(&points);
 
-    let adjacent_matrix = get_adjacent_matrix(&points, &img);
-    print_adjacent_matrix(&adjacent_matrix);
+    let mut adjacent_points = get_adjacent_matrix(&points, &img);
+    adjacent_points.sort();
+    print_adjacent_points(&adjacent_points);
 }
