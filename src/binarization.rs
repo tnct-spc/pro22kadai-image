@@ -50,6 +50,18 @@ pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     for i in 0..x_max * y_max {
         ret[i / x_max][i % x_max] = lut[p_src[i]];
     }
+    // いちばん外側の画素が白だった場合，画素を反転する（背景が白画素の場合にいちばん外側に輪郭線が出現するのを防止するため）
+    if img[0][0] == 1
+        && img[0][x_max - 1] == 1
+        && img[y_max - 1][x_max - 1] == 1
+        && img[y_max - 1][0] == 1
+    {
+        for line in &mut ret {
+            for x in line {
+                *x = (*x + 1) % 2;
+            }
+        }
+    }
     ret
 }
 

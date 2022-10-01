@@ -24,17 +24,22 @@ pub fn outline(img: &mut Vec<Vec<usize>>) {
     zero_padding(img);
 }
 
-fn zero_padding(img: &mut Vec<Vec<usize>>) {
-    let x_max = img[0].len();
-    let y_max = img.len();
+fn zero_padding(img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+    let y_max = img.len() + 2;
+    let x_max = img[0].len() + 2;
+
+    let mut ret = vec![vec![0; x_max]; y_max];
+
+    for y in 0..y_max {}
 
     for y in 0..y_max {
-        img[y][0] = 0;
-        img[y][x_max - 1] = 0;
+        ret[y][0] = 0;
+        ret[y][x_max - 1] = 0;
     }
 
     for x in 0..x_max {
-        img[0][x] = 0;
-        img[y_max - 1][x] = 0;
+        ret[0][x] = 0;
+        ret[y_max - 1][x] = 0;
     }
+    ret
 }

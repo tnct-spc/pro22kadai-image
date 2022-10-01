@@ -1,54 +1,83 @@
-pub struct Coordinate {
-    pub x: usize,
-    pub y: usize,
-}
+use image::imageops::replace;
+
+use crate::Coordinate;
 
 const D: usize = 3;
+
+struct NoizeFilter {
+    before: [[usize; D]; D],
+    after: [[usize; D]; D],
+}
+
+impl NoizeFilter {
+    fn init(before: [[usize; D]; D], after: [[usize; D]; D]) -> NoizeFilter {
+        NoizeFilter { before, after }
+    }
+    fn flip_horizontal(&self) -> Self {
+        let before = flip_matrix_horizontal(&self.before);
+        let after = flip_matrix_horizontal(&self.after);
+
+        NoizeFilter { before, after }
+    }
+    fn flip_vertical(&self) -> Self {
+        let before = flip_matrix_vertical(&self.before);
+        let after = flip_matrix_vertical(&self.after);
+
+        NoizeFilter { before, after }
+    }
+}
 
 // 0 0 0
 // 1 1 0
 // 0 1 0
 const CORNER1: [[usize; D]; D] = [[0, 0, 0], [1, 1, 0], [0, 1, 0]];
 
-// 0 0 0
-// 1 0 0
-// 0 1 0
-const CORNER2: [[usize; D]; D] = [[0, 0, 0], [1, 0, 0], [0, 1, 0]];
-
-// 0 0 0
-// 1 0 0
-// 1 1 0
-const CORNER3: [[usize; D]; D] = [[0, 0, 0], [1, 0, 0], [1, 1, 0]];
-
 // 1 0 1
 // 0 1 0
 // 0 0 0
-const CORNER4: [[usize; D]; D] = [[1, 0, 1], [0, 1, 0], [0, 0, 0]];
+const CORNER2: [[usize; D]; D] = [[1, 0, 1], [0, 1, 0], [0, 0, 0]];
 
 // 1 0 0
 // 0 1 1
 // 0 0 0
-const CORNER5: [[usize; D]; D] = [[1, 0, 0], [0, 1, 1], [0, 0, 0]];
+const CORNER3: [[usize; D]; D] = [[1, 0, 0], [0, 1, 1], [0, 0, 0]];
+
+// 0 1 0    0 0 0
+// 1 1 1 => 1 1 1
+// 0 0 0    0 0 0
+const FILTER1: NoizeFilter = NoizeFilter {
+    before: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+    after: [[0, 0, 0], [1, 1, 1], [0, 0, 0]],
+};
+
+// 0 0 0    0 0 0
+// 0 1 0 => 0 0 0
+// 0 0 0    0 0 0
+const FILTER2: NoizeFilter = NoizeFilter {
+    before: [[0, 0, 0], [0, 1, 0], [0, 0, 0]],
+    after: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
+};
 
 pub fn pick_corner_point(img: &Vec<Vec<usize>>) -> Vec<Coordinate> {
-    let ret = apply_filter(img, &CORNER1);
+    let mut ret = apply_corner_filter(img, &CORNER1);
 
-    let r = apply_filter(img, &CORNER2);
-    let ret = join_vec(ret, r);
+    let r = apply_corner_filter(img, &CORNER2);
+    ret = join_vec(ret, r);
 
-    let r = apply_filter(img, &CORNER3);
-    let ret = join_vec(ret, r);
+    let r = apply_corner_filter(img, &CORNER3);
+    ret = join_vec(ret, r);
 
-    let r = apply_filter(img, &CORNER4);
-    let ret = join_vec(ret, r);
-
-    let r = apply_filter(img, &CORNER5);
-    let ret = join_vec(ret, r);
+    ret.sort();
 
     ret
 }
 
-fn apply_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordinate> {
+pub fn noize_erase(img: &mut Vec<Vec<usize>>) {
+    apply_noize_filter(img, &FILTER1);
+    apply_noize_filter(img, &FILTER2);
+}
+
+fn apply_corner_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordinate> {
     let detected_points = get_coordinates(img, filter);
 
     let filter = flip_matrix_horizontal(filter);
@@ -66,6 +95,19 @@ fn apply_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordina
     detected_points
 }
 
+fn apply_noize_filter(img: &mut Vec<Vec<usize>>, filter: &NoizeFilter) {
+    replace_filter(img, &filter);
+
+    let filter = filter.flip_horizontal();
+    replace_filter(img, &filter);
+
+    let filter = filter.flip_vertical();
+    replace_filter(img, &filter);
+
+    let filter = filter.flip_horizontal();
+    replace_filter(img, &filter);
+}
+
 fn get_coordinates(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordinate> {
     let mut ret = Vec::new();
     let s = D / 2;
@@ -75,24 +117,44 @@ fn get_coordinates(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coord
 
     for y in s..y_max - s {
         for x in s..x_max - s {
-            if is_match_filter(img, filter, x, y) {
-                ret.push(Coordinate { x, y });
+            if match_filter(img, filter, Coordinate::init(x, y)) {
+                ret.push(Coordinate::init(x, y));
             }
         }
     }
     ret
 }
 
-fn is_match_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D], x: usize, y: usize) -> bool {
+fn match_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D], point: Coordinate) -> bool {
     let mut ret = true;
     let s = D / 2;
 
     for j in 0..D {
         for i in 0..D {
-            ret &= img[y - s + j][x - s + i] == filter[j][i];
+            ret &= img[point.y - s + j][point.x - s + i] == filter[j][i];
         }
     }
     ret
+}
+
+// Replace before as after when filter matches
+fn replace_filter(img: &mut Vec<Vec<usize>>, filter: &NoizeFilter) {
+    let y_max = img.len();
+    let x_max = img[0].len();
+
+    let s = D / 2;
+
+    for y in 1..y_max - 1 {
+        for x in 1..x_max - 1 {
+            if match_filter(img, &filter.before, Coordinate::init(x, y)) {
+                for j in 0..D {
+                    for i in 0..D {
+                        img[y - s + j][x - s + i] = filter.after[j][i];
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn join_vec<T>(a: Vec<T>, b: Vec<T>) -> Vec<T> {
@@ -140,17 +202,6 @@ fn flip_matrix(filter: &[[usize; D]; D]) -> [[usize; D]; D] {
     ret
 }
 
-fn match_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D], x: usize, y: usize) -> bool {
-    let mut ret = true;
-
-    for j in 0..D {
-        for i in 0..D {
-            ret &= img[y - j][x - i] == filter[j][i];
-        }
-    }
-    ret
-}
-
 fn print_filter(filter: &[[usize; D]; D]) {
     for y in 0..D {
         print!("[");
@@ -170,4 +221,8 @@ pub fn print_coordinates(points: &Vec<Coordinate>) {
         }
     }
     println!();
+}
+
+fn sort_points(points: &mut Vec<Coordinate>) {
+    points.sort();
 }
