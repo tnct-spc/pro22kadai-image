@@ -1,4 +1,4 @@
-use crate::coordinate::Coordinate;
+use crate::Coordinate;
 use std::clone::Clone;
 use std::marker::Copy;
 
@@ -55,24 +55,24 @@ const D: [Direction; 8] = [
 ];
 
 pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
-    let y_max = img.len();
-    let x_max = img[0].len();
-
     let points_count = points.len();
 
     println!("{} Points are found", points_count);
 
     let mut adjacent_matrix = vec![vec![0; points_count]; points_count];
 
-    for (i, _) in points.iter().enumerate() {
-        print!("[{}] ", i);
-        print!("{}----", points[i]);
-        let (target, distance, _) = get_beside_pixels(i, img, points);
+    let mut lut = vec![100; points_count];
 
-        print!("[{}] {}", target, points[target]);
+    for i in 0..points_count {
+        print!("[{:4}] ", i); // ←ここで止まる
+        print!("{}----", points[i]);
+        let (target, distance, direction) = get_beside_pixels(i, lut[i], img, points);
+        lut[target] = direction;
+
+        print!("[{:4}] {}", target, points[target]);
         adjacent_matrix[i][target] = distance;
         adjacent_matrix[target][i] = distance;
-        println!("\tCost: {}", distance);
+        println!("\tDistance: {:4}", distance);
     }
     println!("Finished to get adjacent matrix");
     adjacent_matrix
@@ -80,25 +80,26 @@ pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> V
 
 pub fn get_beside_pixels(
     target: usize,
+    direction: usize,
     img: &Vec<Vec<usize>>,
     points: &Vec<Coordinate>,
 ) -> (usize, usize, usize) {
     let mut target_point = points[target];
-    let mut old_direction = 100;
+    let mut direction = direction;
     let mut target_index;
 
-    (target_point, old_direction) = point_next(target_point, old_direction, img);
+    (target_point, direction) = point_next(target_point, direction, img);
     target_index = search_point(target_point, points);
 
     while target_index < 0 {
-        (target_point, old_direction) = point_next(target_point, old_direction, img);
-        if old_direction == 100 {
-            return (target, 0, old_direction);
+        (target_point, direction) = point_next(target_point, direction, img);
+        if direction == 100 {
+            return (target, 0, direction);
         }
         target_index = search_point(target_point, points);
     }
     let distance = euclid_distance(points[target], points[target_index as usize]);
-    (target_index as usize, distance, old_direction)
+    (target_index as usize, distance, direction)
 }
 
 fn euclid_distance(a: Coordinate, b: Coordinate) -> usize {
