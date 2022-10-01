@@ -32,7 +32,6 @@ pub fn conv_from_line(img: Vec<usize>, x_max: usize) -> Vec<Vec<usize>> {
     vec![vec![0]]
 }
 
-// threshold: 輝度のしきい値（これ以上は白画素，これ以下は黒画素）
 pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     let p_src = conv_to_line(&img);
     let x_max = img[0].len();
@@ -50,7 +49,7 @@ pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     for i in 0..x_max * y_max {
         ret[i / x_max][i % x_max] = lut[p_src[i]];
     }
-    // いちばん外側の画素が白だった場合，画素を反転する（背景が白画素の場合にいちばん外側に輪郭線が出現するのを防止するため）
+    // いちばん外側の4隅の画素が白だった場合，画素を反転する（背景が白画素の場合にいちばん外側に輪郭線が出現するのを防止するため）
     if img[0][0] == 1
         && img[0][x_max - 1] == 1
         && img[y_max - 1][x_max - 1] == 1
