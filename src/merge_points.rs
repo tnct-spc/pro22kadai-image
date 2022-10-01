@@ -1,50 +1,37 @@
-use crate::corner_detector::Coordinate;
+use crate::coordinate::Coordinate;
+use crate::get_adjacent::euclid_distance;
 
-fn euclidean_distance(p1x: usize, p1y: usize, p2x: usize, p2y: usize) -> usize { //点A,Bのユークリッド距離を求める(p1x,p1y...点AのX,Y座標,  p2x,p2y...点BのX,Y座標)
-    let dx: usize;
-    let dy: usize;
-    let d2: usize;
-    let mut d1: usize = 1;
-    if p1x > p2x {
-        dx = p1x - p2x;
-    } else {
-        dx = p2x - p1x;
-    }
-    if p1y > p2y {
-        dy = p1y - p2y;
-    } else {
-        dy = p2y - p1y;
-    }
-    d2 = dx * dx + dy * dy;
-    while d1 * d1 < d2 {
-        d1 += 1;
-    }
-    return d1;
-}
-
-fn merge_points(points: Vec<Coordinate>, adjacent: Vec<Vec<usize>>, n: usize) -> (Vec<Coordinate>, Vec<Vec<usize>>) { // 点を結合する(このプログラムのメイン)
-    let mut m1: Vec<Coordinate> = Vec::new();//出力する点の座標リスト
-    let mut m2: Vec<Coordinate> = Vec::new();//メモする点の座標リスト
-    let mut a1: Vec<Vec<usize>> = adjacent.clone();//出力する点の隣接行列
-    let mut a2: Vec<Vec<usize>> = Vec::new();//メモする点の隣接行列
-    let mut ai: Vec<usize> = Vec::new();//隣接行列の第i行のメモ
-    let mut i: usize;//第何行？
-    let mut j: usize;//第何列？
-    let mut count: usize = 0;//pointsやadjacentを削るのは何回目？
-    let mut labela: usize = 0;//結合点候補A
-    let mut labelb: usize = 0;//結合点候補B
-    let mut min: usize = 0;//結合する点の間の距離
+fn merge_points(
+    points: Vec<Coordinate>,
+    adjacent: Vec<Vec<usize>>,
+    n: usize,
+) -> (Vec<Coordinate>, Vec<Vec<usize>>) {
+    // 点を結合する(このプログラムのメイン)
+    let mut m1: Vec<Coordinate> = Vec::new(); //出力する点の座標リスト
+    let mut m2: Vec<Coordinate> = Vec::new(); //メモする点の座標リスト
+    let mut a1: Vec<Vec<usize>> = adjacent.clone(); //出力する点の隣接行列
+    let mut a2: Vec<Vec<usize>> = Vec::new(); //メモする点の隣接行列
+    let mut ai: Vec<usize> = Vec::new(); //隣接行列の第i行のメモ
+    let mut i: usize; //第何行？
+    let mut j: usize; //第何列？
+    let mut count: usize = 0; //pointsやadjacentを削るのは何回目？
+    let mut labela: usize = 0; //結合点候補A
+    let mut labelb: usize = 0; //結合点候補B
+    let mut min: usize = 0; //結合する点の間の距離
     let mut pl: usize = points.len();
     for i in 0..pl {
-        m1.push(Coordinate { x: (points[i].x), y: (points[i].y)});
+        m1.push(Coordinate {
+            x: (points[i].x),
+            y: (points[i].y),
+        });
     }
     while pl - count > n {
         min = 0;
         labela = 0;
         labela = 0;
         for i in 0..pl - count {
-            for j in i..pl - count{
-                if a1[i][j] != 0 && i < j{
+            for j in i..pl - count {
+                if a1[i][j] != 0 && i < j {
                     if min == 0 || min > a1[i][j] {
                         min = a1[i][j];
                         labela = i;
@@ -56,29 +43,46 @@ fn merge_points(points: Vec<Coordinate>, adjacent: Vec<Vec<usize>>, n: usize) ->
         //println!("点{}と点{}を結合します",labela + 1, labelb + 1);
         m2 = Vec::new();
         for i in 0..pl - count {
-            m2.push(Coordinate { x: (m1[i].x), y: (m1[i].y)});
+            m2.push(Coordinate {
+                x: (m1[i].x),
+                y: (m1[i].y),
+            });
         }
         m1 = Vec::new();
         for i in 0..labela {
-            m1.push(Coordinate { x: (m2[i].x), y: (m2[i].y)});
+            m1.push(Coordinate {
+                x: (m2[i].x),
+                y: (m2[i].y),
+            });
         }
-        m1.push(Coordinate { x: ((m2[labela].x + m2[labelb].x) / 2), y: ((m2[labela].y + m2[labelb].y) / 2)});
+        m1.push(Coordinate {
+            x: ((m2[labela].x + m2[labelb].x) / 2),
+            y: ((m2[labela].y + m2[labelb].y) / 2),
+        });
         for i in labelb + 1..pl - count {
-            m1.push(Coordinate { x: (m2[i].x), y: (m2[i].y)});
+            m1.push(Coordinate {
+                x: (m2[i].x),
+                y: (m2[i].y),
+            });
         }
         a2 = a1.clone();
         a1 = Vec::new();
         for i in 1..labela + 1 {
             ai = Vec::new();
-            for j in 1..labela + 1{
-                if a2[i - 1][j - 1] > 0{
+            for j in 1..labela + 1 {
+                if a2[i - 1][j - 1] > 0 {
                     ai.push(a2[i - 1][j - 1]);
                 } else {
                     ai.push(0);
                 }
             }
             if a2[i - 1][labela] != 0 || a2[i - 1][labelb] != 0 {
-                ai.push(euclidean_distance(m1[labela].x, m1[labela].y, m1[i - 1].x, m1[i - 1].y));
+                ai.push(euclid_distance(
+                    m1[labela].x,
+                    m1[labela].y,
+                    m1[i - 1].x,
+                    m1[i - 1].y,
+                ));
             } else {
                 ai.push(0);
             }
@@ -92,17 +96,27 @@ fn merge_points(points: Vec<Coordinate>, adjacent: Vec<Vec<usize>>, n: usize) ->
             a1.push(ai.clone());
         }
         ai = Vec::new();
-        for j in 0..labela{
+        for j in 0..labela {
             if a2[labela][j] != 0 || a2[labelb][j] != 0 {
-                ai.push(euclidean_distance(m1[labela].x, m1[labela].y, m1[j].x, m1[j].y));
+                ai.push(euclid_distance(
+                    m1[labela].x,
+                    m1[labela].y,
+                    m1[j].x,
+                    m1[j].y,
+                ));
             } else {
                 ai.push(0);
             }
         }
-        ai.push(0);//そりゃ、隣接行列の対角成分は0だもの。
+        ai.push(0); //そりゃ、隣接行列の対角成分は0だもの。
         for j in labelb + 1..pl - count {
             if a2[labela][j] != 0 || a2[labelb][j] != 0 {
-                ai.push(euclidean_distance(m1[labela].x, m1[labela].y, m1[j - 1].x, m1[j - 1].y));
+                ai.push(euclid_distance(
+                    m1[labela].x,
+                    m1[labela].y,
+                    m1[j - 1].x,
+                    m1[j - 1].y,
+                ));
             } else {
                 ai.push(0);
             }
@@ -111,19 +125,24 @@ fn merge_points(points: Vec<Coordinate>, adjacent: Vec<Vec<usize>>, n: usize) ->
         for i in labelb..pl - count - 1 {
             ai = Vec::new();
             for j in 1..labela + 1 {
-                if a2[i + 1][j - 1] > 0{
+                if a2[i + 1][j - 1] > 0 {
                     ai.push(a2[i + 1][j - 1]);
                 } else {
                     ai.push(0);
                 }
             }
             if a2[i + 1][labela] != 0 || a2[i + 1][labelb] != 0 {
-                ai.push(euclidean_distance(m1[labela].x, m1[labela].y, m1[i].x, m1[i].y));
+                ai.push(euclid_distance(
+                    m1[labela].x,
+                    m1[labela].y,
+                    m1[i].x,
+                    m1[i].y,
+                ));
             } else {
                 ai.push(0);
             }
-            for j in labelb + 1..pl - count{
-                if a2[i + 1][j] > 0{
+            for j in labelb + 1..pl - count {
+                if a2[i + 1][j] > 0 {
                     ai.push(a2[i + 1][j]);
                 } else {
                     ai.push(0);
@@ -143,7 +162,7 @@ fn merge_points(points: Vec<Coordinate>, adjacent: Vec<Vec<usize>>, n: usize) ->
     return (m1, a1);
 }
 ////////////////////////////////////////////////////　　↓↓↓↓↓↓↓動作確認プログラム↓↓↓↓↓↓↓
-/* 
+/*
 fn main() {
     let mut tenn: Vec<Coordinate> = Vec::new();
     let mut rinsetsu: Vec<Vec<usize>> = Vec::new();
