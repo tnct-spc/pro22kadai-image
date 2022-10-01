@@ -17,13 +17,16 @@ const BLACK: &str = "　";
 const WHITE: &str = "鬱";
 
 fn main() {
-    let image = png_to_base64("./ThinkPhone.png");
+    // let image = png_to_base64("./ThinkPhone.png");
+    let image = "hogehoge";
 
     let url = format!("https://hogehoge.com/?img={}", image);
 
+    println!("before: {}", url);
+
     let data = get_base64_from_url(&url);
 
-    println!("{}", data);
+    println!(" after: {}", data);
 }
 
 fn fake_main() {
