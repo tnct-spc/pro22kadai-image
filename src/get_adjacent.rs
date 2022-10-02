@@ -55,7 +55,7 @@ const D: [Direction; 8] = [
     Direction { x: 0, y: 1 },
 ];
 
-pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<AdjacentPoints> {
+pub fn get_adjacent_points(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<AdjacentPoints> {
     let points_count = points.len();
 
     let mut ret = Vec::<AdjacentPoints>::new();
@@ -65,10 +65,13 @@ pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> V
     let mut past_directions = vec![100; points_count];
 
     for i in 0..points_count {
+        print!("[{}]", i);
         let (target, distance, direction) = get_beside_pixels(i, past_directions[i], img, points);
         past_directions[target] = direction;
 
-        ret.push(AdjacentPoints::new(i, target, distance));
+        let adjacent_points = AdjacentPoints::new(i, target, distance);
+        println!("{}-{}-{}", points[i], distance, points[target]);
+        ret.push(adjacent_points);
     }
     println!("Finished to get adjacent matrix");
     ret
