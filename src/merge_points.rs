@@ -1,7 +1,7 @@
 use crate::coordinate::Coordinate;
-use crate::get_adjacent::euclid_distance;
+use crate::get_adjacent::{euclid_distance, manhattan_distance};
 
-fn merge_points(
+pub fn merge_points(
     points: Vec<Coordinate>,
     adjacent: Vec<Vec<usize>>,
     n: usize,
@@ -77,12 +77,7 @@ fn merge_points(
                 }
             }
             if a2[i - 1][labela] != 0 || a2[i - 1][labelb] != 0 {
-                ai.push(euclid_distance(
-                    m1[labela].x,
-                    m1[labela].y,
-                    m1[i - 1].x,
-                    m1[i - 1].y,
-                ));
+                ai.push(distance(m1[labela], m1[i - 1]));
             } else {
                 ai.push(0);
             }
@@ -98,12 +93,7 @@ fn merge_points(
         ai = Vec::new();
         for j in 0..labela {
             if a2[labela][j] != 0 || a2[labelb][j] != 0 {
-                ai.push(euclid_distance(
-                    m1[labela].x,
-                    m1[labela].y,
-                    m1[j].x,
-                    m1[j].y,
-                ));
+                ai.push(distance(m1[labela], m1[j]));
             } else {
                 ai.push(0);
             }
@@ -111,12 +101,7 @@ fn merge_points(
         ai.push(0); //そりゃ、隣接行列の対角成分は0だもの。
         for j in labelb + 1..pl - count {
             if a2[labela][j] != 0 || a2[labelb][j] != 0 {
-                ai.push(euclid_distance(
-                    m1[labela].x,
-                    m1[labela].y,
-                    m1[j - 1].x,
-                    m1[j - 1].y,
-                ));
+                ai.push(distance(m1[labela], m1[j - 1]));
             } else {
                 ai.push(0);
             }
@@ -132,12 +117,7 @@ fn merge_points(
                 }
             }
             if a2[i + 1][labela] != 0 || a2[i + 1][labelb] != 0 {
-                ai.push(euclid_distance(
-                    m1[labela].x,
-                    m1[labela].y,
-                    m1[i].x,
-                    m1[i].y,
-                ));
+                ai.push(distance(m1[labela], m1[i]));
             } else {
                 ai.push(0);
             }
@@ -161,6 +141,12 @@ fn merge_points(
     }
     return (m1, a1);
 }
+
+fn distance(a: Coordinate, b: Coordinate) -> usize {
+    // euclid_distance(a, b)
+    manhattan_distance(a, b)
+}
+
 ////////////////////////////////////////////////////　　↓↓↓↓↓↓↓動作確認プログラム↓↓↓↓↓↓↓
 /*
 fn main() {
