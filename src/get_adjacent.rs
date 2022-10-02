@@ -1,4 +1,3 @@
-use crate::adjacent_points::AdjacentPoints;
 use crate::coordinate::Coordinate;
 use std::clone::Clone;
 use std::marker::Copy;
@@ -55,23 +54,22 @@ const D: [Direction; 8] = [
     Direction { x: 0, y: 1 },
 ];
 
-pub fn get_adjacent_points(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<AdjacentPoints> {
+pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
     let points_count = points.len();
 
-    let mut ret = Vec::<AdjacentPoints>::new();
+    // let mut ret = Vec::<AdjacentPoints>::new();
+    let mut ret = vec![vec![0; points_count]; points_count];
 
     println!("{} Points are found", points_count);
 
     let mut past_directions = vec![100; points_count];
 
     for i in 0..points_count {
-        print!("[{}]", i);
         let (target, distance, direction) = get_beside_pixels(i, past_directions[i], img, points);
         past_directions[target] = direction;
 
-        let adjacent_points = AdjacentPoints::new(i, target, distance);
-        println!("{}-{}-{}", points[i], distance, points[target]);
-        ret.push(adjacent_points);
+        ret[i][target] = distance;
+        ret[target][i] = distance;
     }
     println!("Finished to get adjacent matrix");
     ret
