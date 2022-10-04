@@ -20,19 +20,16 @@ fn merge_two_points(
     let mut new_adjacent_matrix = Vec::<Vec<usize>>::new();
     let mut new_points = Vec::<Coordinate>::new();
 
-    // p1とp2がつながっている頂点の番号をリストアップする．
+    // 隣接行列のp1とp2の分を分離する
     let p1_adjacenting_points = get_adjacenting_points(p1, &adjacent_matrix);
     let p2_adjacenting_points = get_adjacenting_points(p2, &adjacent_matrix);
+    // p1とp2の隣接頂点をマージする
 
     // 頂点のVecから結合するやつを消し飛ばし，中点を追加する
-    // forを3回に分けているのは大量の条件分岐を回避するため
-    for i in 0..p1 {
-        new_points.push(points[i]);
-    }
-    for i in p1 + 1..p2 {
-        new_points.push(points[i]);
-    }
-    for i in p2 + 1..p_max {
+    for i in 0..p_max {
+        if i == p1 || i == p2 {
+            continue;
+        }
         new_points.push(points[i]);
     }
     new_points.push(mid_point);
@@ -43,10 +40,19 @@ fn merge_two_points(
 fn get_adjacenting_points(index: usize, adjacent_matrix: &Vec<Vec<usize>>) -> Vec<usize> {
     let mut ret = Vec::<usize>::new();
     for i in 0..adjacent_matrix.len() {
-        if adjacent_matrix[index][i] > 0 {
-            ret.push(i);
-        }
+        ret.push(adjacent_matrix[index][i]);
     }
     ret
 }
 
+fn merge_adjacenting_points(
+    p1: usize,
+    p2: usize,
+    p1_adjacenting_matrix: Vec<usize>,
+    p2_adjacenting_matrix: Vec<usize>,
+) -> Vec<usize> {
+    let points_count = p1_adjacenting_matrix.len();
+    let lut = vec![0; points_count];
+
+    vec![0]
+}
