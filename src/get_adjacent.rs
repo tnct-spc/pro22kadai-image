@@ -95,21 +95,8 @@ pub fn get_beside_pixels(
         }
         target_index = search_point(target_point, points);
     }
-    let distance = manhattan_distance(points[target], points[target_index as usize]);
+    let distance = distance(points[target], points[target_index as usize]);
     (target_index as usize, distance, direction)
-}
-
-pub fn euclid_distance(a: Coordinate, b: Coordinate) -> usize {
-    let x = a.x.abs_diff(b.x) as f64;
-    let y = a.y.abs_diff(b.y) as f64;
-
-    (x * x + y * y).sqrt() as usize
-}
-
-pub fn manhattan_distance(a: Coordinate, b: Coordinate) -> usize {
-    let x = a.x.abs_diff(b.x);
-    let y = a.y.abs_diff(b.y);
-    x + y
 }
 
 fn point_next(
@@ -149,4 +136,27 @@ fn search_point(target: Coordinate, points: &Vec<Coordinate>) -> isize {
         }
     }
     -1
+}
+
+fn euclid_distance(a: Coordinate, b: Coordinate) -> usize {
+    let x = a.x.abs_diff(b.x) as f64;
+    let y = a.y.abs_diff(b.y) as f64;
+
+    ((x * x + y * y).sqrt() + 0.5) as usize
+}
+
+fn manhattan_distance(a: Coordinate, b: Coordinate) -> usize {
+    let x = a.x.abs_diff(b.x);
+    let y = a.y.abs_diff(b.y);
+    x + y
+}
+
+fn largest_axis_distance(a: Coordinate, b: Coordinate) -> usize {
+    let x = a.x.abs_diff(b.x);
+    let y = a.y.abs_diff(b.y);
+    x.max(y)
+}
+
+pub fn distance(a: Coordinate, b: Coordinate) -> usize {
+    manhattan_distance(a, b)
 }

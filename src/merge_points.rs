@@ -1,5 +1,5 @@
 use crate::coordinate::Coordinate;
-use crate::get_adjacent::{euclid_distance, manhattan_distance};
+use crate::get_adjacent::{euclid_distance, distance};
 
 pub fn merge_points(
     points: Vec<Coordinate>,
@@ -144,7 +144,7 @@ pub fn merge_points(
 
 fn distance(a: Coordinate, b: Coordinate) -> usize {
     // euclid_distance(a, b)
-    manhattan_distance(a, b)
+    distance(a, b)
 }
 
 ////////////////////////////////////////////////////　　↓↓↓↓↓↓↓動作確認プログラム↓↓↓↓↓↓↓
