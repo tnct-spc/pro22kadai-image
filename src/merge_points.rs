@@ -139,7 +139,7 @@ pub fn merge_points(
     }
     // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
     points_count = points.len();
-    while points_count >= L {
+    while points_count > L {
         let a = adjacents.pop().unwrap();
         (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
         adjacents = generate_adjacents(&points, &adjacent_matrix);
