@@ -28,6 +28,15 @@ impl Coordinate {
 
         x * x + y * y
     }
+    pub fn mid(&self, other: Self) -> Self {
+        let x = self.x + other.x;
+        let y = self.y + other.y;
+
+        let x = ((x as f64 + 0.5) / 2.0) as usize;
+        let y = ((y as f64 + 0.5) / 2.0) as usize;
+
+        Self { x, y }
+    }
 }
 
 impl Copy for Coordinate {}

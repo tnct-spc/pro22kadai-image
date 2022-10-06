@@ -41,3 +41,16 @@ pub fn print_points(points: &Vec<Coordinate>) {
         println!("{}", *p);
     }
 }
+
+pub fn print_adjacent_points(points: &Vec<Coordinate>, adjacent_matrix: &Vec<Vec<usize>>) {
+    let y_max = adjacent_matrix.len();
+    let x_max = adjacent_matrix[0].len();
+
+    for y in 0..y_max {
+        for x in y..x_max {
+            if adjacent_matrix[y][x] > 0 {
+                println!("{}-{}-{}", points[x], adjacent_matrix[y][x], points[y]);
+            }
+        }
+    }
+}
