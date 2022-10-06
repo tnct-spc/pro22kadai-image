@@ -20,7 +20,6 @@ mod corner_detector;
 mod get_adjacent;
 mod get_base64_from_url;
 mod merge_points;
-mod merge_points;
 mod outline;
 mod png_reader;
 mod print;
