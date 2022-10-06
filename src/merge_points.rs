@@ -1,241 +1,308 @@
+use std::clone::Clone;
+use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
+use std::marker::Copy;
+
 use crate::coordinate::Coordinate;
-use crate::get_adjacent::{euclid_distance, distance};
+use crate::get_adjacent::distance;
+
+const T: usize = 3; // 頂点間の距離がこれ以下だった場合は問答無用で結合
+const L: usize = 50; // 頂点の最大数
+
+// p1とp2の隣接行列から中点の隣接行列を良い感じに算出する
+// 頂点配列からp1とp2を消し，中点を追加する
+// 隣接行列のp1とp2に相当する部分を消し，中点に相当する部分を追加する
+
+struct Adjacent {
+    p: usize,
+    q: usize,
+    cost: usize,
+}
+
+impl Adjacent {
+    fn init(p: usize, q: usize, cost: usize) -> Self {
+        Adjacent { p, q, cost }
+    }
+}
+
+impl Copy for Adjacent {}
+
+impl Clone for Adjacent {
+    fn clone(&self) -> Self {
+        Adjacent {
+            p: self.p,
+            q: self.q,
+            cost: self.cost,
+        }
+    }
+}
+
+// costでソートするために比較演算子をオーバーライドする
+impl Eq for Adjacent {}
+
+impl PartialEq for Adjacent {
+    fn eq(&self, other: &Self) -> bool {
+        self.cost == other.cost
+    }
+    fn ne(&self, other: &Self) -> bool {
+        self.cost != other.cost
+    }
+}
+
+impl Ord for Adjacent {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.cost > other.cost {
+            Ordering::Greater
+        } else if self.cost < other.cost {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
+    }
+    fn max(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
+        if self.cost > other.cost {
+            self
+        } else {
+            other
+        }
+    }
+    fn min(self, other: Self) -> Self
+    where
+        Self: Sized,
+    {
+        if self.cost < other.cost {
+            self
+        } else {
+            other
+        }
+    }
+    fn clamp(self, min: Self, max: Self) -> Self
+    where
+        Self: Sized,
+    {
+        if self.cost > max.cost {
+            max
+        } else if self.cost < min.cost {
+            min
+        } else {
+            self
+        }
+    }
+}
+
+impl PartialOrd for Adjacent {
+    fn lt(&self, other: &Self) -> bool {
+        self.cost < other.cost
+    }
+    fn le(&self, other: &Self) -> bool {
+        self.cost <= other.cost
+    }
+    fn gt(&self, other: &Self) -> bool {
+        self.cost > other.cost
+    }
+    fn ge(&self, other: &Self) -> bool {
+        self.cost >= other.cost
+    }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.cost > other.cost {
+            return Some(Ordering::Greater);
+        }
+        if self.cost < other.cost {
+            return Some(Ordering::Less);
+        }
+        if self.cost == other.cost {
+            return Some(Ordering::Equal);
+        }
+        None
+    }
+}
 
 pub fn merge_points(
     points: Vec<Coordinate>,
-    adjacent: Vec<Vec<usize>>,
-    n: usize,
+    adjacent_matrix: Vec<Vec<usize>>,
 ) -> (Vec<Coordinate>, Vec<Vec<usize>>) {
-    // 点を結合する(このプログラムのメイン)
-    let mut m1: Vec<Coordinate> = Vec::new(); //出力する点の座標リスト
-    let mut m2: Vec<Coordinate> = Vec::new(); //メモする点の座標リスト
-    let mut a1: Vec<Vec<usize>> = adjacent.clone(); //出力する点の隣接行列
-    let mut a2: Vec<Vec<usize>> = Vec::new(); //メモする点の隣接行列
-    let mut ai: Vec<usize> = Vec::new(); //隣接行列の第i行のメモ
-    let mut i: usize; //第何行？
-    let mut j: usize; //第何列？
-    let mut count: usize = 0; //pointsやadjacentを削るのは何回目？
-    let mut labela: usize = 0; //結合点候補A
-    let mut labelb: usize = 0; //結合点候補B
-    let mut min: usize = 0; //結合する点の間の距離
-    let mut pl: usize = points.len();
-    for i in 0..pl {
-        m1.push(Coordinate {
-            x: (points[i].x),
-            y: (points[i].y),
-        });
+    let mut points = points;
+    let mut adjacent_matrix = adjacent_matrix;
+    let mut points_count = points.len();
+
+    let mut adjacents = generate_adjacents(&points, &adjacent_matrix);
+    adjacents.sort();
+
+    // 頂点間の距離がしきい値以下のものを結合する
+    while adjacents[0].cost < T {
+        let a = adjacents.pop().unwrap();
+        (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
+        adjacents = generate_adjacents(&points, &adjacent_matrix);
+        points_count = points.len();
     }
-    while pl - count > n {
-        min = 0;
-        labela = 0;
-        labela = 0;
-        for i in 0..pl - count {
-            for j in i..pl - count {
-                if a1[i][j] != 0 && i < j {
-                    if min == 0 || min > a1[i][j] {
-                        min = a1[i][j];
-                        labela = i;
-                        labelb = j;
-                    }
-                }
-            }
-        }
-        //println!("点{}と点{}を結合します",labela + 1, labelb + 1);
-        m2 = Vec::new();
-        for i in 0..pl - count {
-            m2.push(Coordinate {
-                x: (m1[i].x),
-                y: (m1[i].y),
-            });
-        }
-        m1 = Vec::new();
-        for i in 0..labela {
-            m1.push(Coordinate {
-                x: (m2[i].x),
-                y: (m2[i].y),
-            });
-        }
-        m1.push(Coordinate {
-            x: ((m2[labela].x + m2[labelb].x) / 2),
-            y: ((m2[labela].y + m2[labelb].y) / 2),
-        });
-        for i in labelb + 1..pl - count {
-            m1.push(Coordinate {
-                x: (m2[i].x),
-                y: (m2[i].y),
-            });
-        }
-        a2 = a1.clone();
-        a1 = Vec::new();
-        for i in 1..labela + 1 {
-            ai = Vec::new();
-            for j in 1..labela + 1 {
-                if a2[i - 1][j - 1] > 0 {
-                    ai.push(a2[i - 1][j - 1]);
-                } else {
-                    ai.push(0);
-                }
-            }
-            if a2[i - 1][labela] != 0 || a2[i - 1][labelb] != 0 {
-                ai.push(distance(m1[labela], m1[i - 1]));
-            } else {
-                ai.push(0);
-            }
-            for j in labelb + 1..pl - count {
-                if a2[i - 1][j] > 0 {
-                    ai.push(a2[i - 1][j]);
-                } else {
-                    ai.push(0);
-                }
-            }
-            a1.push(ai.clone());
-        }
-        ai = Vec::new();
-        for j in 0..labela {
-            if a2[labela][j] != 0 || a2[labelb][j] != 0 {
-                ai.push(distance(m1[labela], m1[j]));
-            } else {
-                ai.push(0);
-            }
-        }
-        ai.push(0); //そりゃ、隣接行列の対角成分は0だもの。
-        for j in labelb + 1..pl - count {
-            if a2[labela][j] != 0 || a2[labelb][j] != 0 {
-                ai.push(distance(m1[labela], m1[j - 1]));
-            } else {
-                ai.push(0);
-            }
-        }
-        a1.push(ai.clone());
-        for i in labelb..pl - count - 1 {
-            ai = Vec::new();
-            for j in 1..labela + 1 {
-                if a2[i + 1][j - 1] > 0 {
-                    ai.push(a2[i + 1][j - 1]);
-                } else {
-                    ai.push(0);
-                }
-            }
-            if a2[i + 1][labela] != 0 || a2[i + 1][labelb] != 0 {
-                ai.push(distance(m1[labela], m1[i]));
-            } else {
-                ai.push(0);
-            }
-            for j in labelb + 1..pl - count {
-                if a2[i + 1][j] > 0 {
-                    ai.push(a2[i + 1][j]);
-                } else {
-                    ai.push(0);
-                }
-            }
-            a1.push(ai.clone());
-        }
-        count += 1;
+    // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
+    points_count = points.len();
+    while points_count >= L {
+        let a = adjacents.pop().unwrap();
+        (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
+        adjacents = generate_adjacents(&points, &adjacent_matrix);
+        points_count = points.len();
     }
-    for i in 0..n {
-        for j in 0..n {
-            if a1[i][j] != 0 {
-                a1[i][j] = 1;
-            }
-        }
-    }
-    return (m1, a1);
+    println!("Merged Points");
+    (points, adjacent_matrix)
 }
 
-fn distance(a: Coordinate, b: Coordinate) -> usize {
-    // euclid_distance(a, b)
-    distance(a, b)
+// 隣接行列をもとに頂点の接続情報を生成する
+fn generate_adjacents(
+    points: &Vec<Coordinate>,
+    adjacent_matrix: &Vec<Vec<usize>>,
+) -> Vec<Adjacent> {
+    let points_count = points.len();
+    let mut ret = Vec::new();
+
+    for i in 0..points_count {
+        for j in i..points_count {
+            if adjacent_matrix[i][j] > 0 {
+                ret.push(Adjacent::init(i, j, adjacent_matrix[i][j]));
+            }
+        }
+    }
+    ret
 }
 
-////////////////////////////////////////////////////　　↓↓↓↓↓↓↓動作確認プログラム↓↓↓↓↓↓↓
-/*
-fn main() {
-    let mut tenn: Vec<Coordinate> = Vec::new();
-    let mut rinsetsu: Vec<Vec<usize>> = Vec::new();
-    let mut ri: Vec<usize> = Vec::new();
-    let d: usize = 4;
-    let e: usize;
-    let f: usize;
-    tenn.push(Coordinate { x: (20), y: (610)});
-    tenn.push(Coordinate { x: (15), y: (170)});
-    tenn.push(Coordinate { x: (200), y: (400)});
-    tenn.push(Coordinate { x: (175), y: (310)});
-    tenn.push(Coordinate { x: (160), y: (235)});
-    tenn.push(Coordinate { x: (325), y: (710)});
-    tenn.push(Coordinate { x: (330), y: (15)});
-    ri.push(0);//1
-    ri.push(440);
-    ri.push(277);
-    ri.push(0);
-    ri.push(0);
-    ri.push(0);
-    ri.push(0);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    ri.push(440);//2
-    ri.push(0);
-    ri.push(0);
-    ri.push(0);
-    ri.push(159);
-    ri.push(0);
-    ri.push(0);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    ri.push(277);//3
-    ri.push(0);
-    ri.push(0);
-    ri.push(93);
-    ri.push(0);
-    ri.push(334);
-    ri.push(0);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    ri.push(0);//4
-    ri.push(0);
-    ri.push(93);
-    ri.push(0);
-    ri.push(76);
-    ri.push(0);
-    ri.push(0);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    ri.push(0);//5
-    ri.push(159);
-    ri.push(0);
-    ri.push(76);
-    ri.push(0);
-    ri.push(0);
-    ri.push(278);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    ri.push(0);//6
-    ri.push(0);
-    ri.push(334);
-    ri.push(0);
-    ri.push(0);
-    ri.push(0);
-    ri.push(695);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    ri.push(0);//7
-    ri.push(0);
-    ri.push(0);
-    ri.push(0);
-    ri.push(278);
-    ri.push(695);
-    ri.push(0);
-    rinsetsu.push(ri);
-    ri = Vec::new();
-    e = tenn.len();
-    (tenn, rinsetsu) = marge_points(tenn, rinsetsu, d);
-    for e in 0..tenn.len() {
-        println!("{} {} {}", e, tenn[e].x, tenn[e].y);
-    }
-    for e in 0..d {
-        for f in 0..d {
-            print!("{:5}", rinsetsu[e][f]);
+// 2つの頂点を結合して隣接行列を再生成する
+fn merge_two_points(
+    p1: usize,
+    p2: usize,
+    points: Vec<Coordinate>,
+    adjacent_matrix: Vec<Vec<usize>>,
+) -> (Vec<Coordinate>, Vec<Vec<usize>>) {
+    // 対象の頂点p1，p2と隣接行列，頂点配列を受け取る
+    // p1とp2の中点を計算する
+    let mid = points[p1].mid(points[p2]);
+
+    // 中点の隣接行列を良い感じに算出する
+    let p1_adjacent_matrix_line = get_adjacent_matrix_line(p1, p2, &adjacent_matrix);
+    let p2_adjacent_matrix_line = get_adjacent_matrix_line(p2, p1, &adjacent_matrix);
+
+    let mid_adjacent_matrix_line =
+        merge_adjacent_matrix_lines(p1_adjacent_matrix_line, p2_adjacent_matrix_line);
+
+    let new_points = regenerate_points(p1, p2, mid, points);
+    let mut new_adjacent_matrix = regenerate_adjacent_matrix(p1, p2, adjacent_matrix);
+
+    let q_max = new_points.len();
+
+    println!("q_max: {}", q_max);
+    println!(
+        "adjacent_matrix len: ({}, {})",
+        new_adjacent_matrix.len(),
+        new_adjacent_matrix[0].len()
+    );
+    for i in 0..q_max {
+        if mid_adjacent_matrix_line[i] > 0 {
+            let distance = distance(new_points[i], mid);
+            new_adjacent_matrix[q_max - 1][i] = distance;
+            new_adjacent_matrix[i][q_max - 1] = distance;
         }
-        println!("");
     }
+
+    (new_points, new_adjacent_matrix)
 }
-*/
+
+fn get_adjacent_matrix_line(p1: usize, p2: usize, adjacent_matrix: &Vec<Vec<usize>>) -> Vec<usize> {
+    let q1 = p1.min(p2);
+    let q2 = p1.max(p2);
+    let q_max = adjacent_matrix.len();
+
+    let mut ret = Vec::<usize>::new();
+
+    for i in 0..q1 {
+        ret.push(adjacent_matrix[p1][i]);
+    }
+    for i in q1 + 1..q2 {
+        ret.push(adjacent_matrix[p1][i]);
+    }
+    for i in q2 + 1..q_max {
+        ret.push(adjacent_matrix[p1][i]);
+    }
+    ret.push(0);
+    ret
+}
+
+fn merge_adjacent_matrix_lines(
+    p1_adjacent_matrix_line: Vec<usize>,
+    p2_adjacent_matrix_line: Vec<usize>,
+) -> Vec<usize> {
+    let mut ret = Vec::<usize>::new();
+    for i in 0..p1_adjacent_matrix_line.len() {
+        ret.push(p1_adjacent_matrix_line[i] + p2_adjacent_matrix_line[i]);
+    }
+    ret
+}
+
+fn regenerate_points(
+    p1: usize,
+    p2: usize,
+    mid: Coordinate,
+    points: Vec<Coordinate>,
+) -> Vec<Coordinate> {
+    let q1 = p1.min(p2);
+    let q2 = p1.max(p2);
+    let q_max = points.len();
+
+    let mut ret = Vec::new();
+
+    for i in 0..q_max {
+        if i == q1 || i == q2 {
+            continue;
+        }
+        ret.push(points[i]);
+    }
+
+    /*
+    for i in 0..q1 {
+        ret.push(points[i]);
+    }
+    for i in (q1 + 1)..q2 {
+        ret.push(points[i]);
+    }
+    for i in (q1 + 1)..q_max {
+        ret.push(points[i]);
+    }
+    */
+    ret.push(mid);
+    ret
+}
+
+// 隣接行列を再生成する
+// 肝心のmidの行/列は0なので，この後にp1とp2をマージしたやつをもとに距離を再計算して隣接行列を再生成する
+fn regenerate_adjacent_matrix(
+    p1: usize,
+    p2: usize,
+    adjacent_matrix: Vec<Vec<usize>>,
+) -> Vec<Vec<usize>> {
+    let q1 = p1.min(p2);
+    let q2 = p1.max(p2);
+    let q_max = adjacent_matrix.len();
+
+    let mut ret = Vec::<Vec<usize>>::new();
+
+    for i in 0..q_max {
+        let mut ret_line = Vec::new();
+        if i == q1 || i == q2 {
+            continue;
+        }
+        for j in 0..q_max {
+            if j == q1 || j == q2 {
+                continue;
+            }
+            ret_line.push(adjacent_matrix[i][j]);
+        }
+        ret_line.push(0);
+        ret.push(ret_line);
+    }
+    let mut ret_line = Vec::<usize>::new();
+    for _ in 0..q_max - 1 {
+        ret_line.push(0);
+    }
+    ret.push(ret_line);
+    ret
+}
