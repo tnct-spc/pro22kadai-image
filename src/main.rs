@@ -42,6 +42,10 @@ fn main() {
     print_adjacent_points(&points, &adjacent_matrix);
 
     let (points, adjacent_matrix) = merge_points(points, adjacent_matrix);
-
-    print_adjacent_points(&points, &adjacent_matrix);
+    println!(
+        "points len: {}, adjacent_matrix len: ({}, {})",
+        points.len(),
+        adjacent_matrix.len(),
+        adjacent_matrix[0].len()
+    );
 }
