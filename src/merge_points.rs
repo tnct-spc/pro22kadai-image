@@ -5,7 +5,7 @@ use std::marker::Copy;
 use crate::coordinate::Coordinate;
 use crate::get_adjacent::distance;
 
-const T: usize = 3; // 頂点間の距離がこれ以下だった場合は問答無用で結合
+const T: usize = 1; // 頂点間の距離がこれ以下だった場合は問答無用で結合
 const L: usize = 50; // 頂点の最大数
 
 // p1とp2の隣接行列から中点の隣接行列を良い感じに算出する
@@ -131,13 +131,14 @@ pub fn merge_points(
     adjacents.sort();
 
     // 頂点間の距離がしきい値以下のものを結合する
-    while adjacents[0].cost < T {
+    while adjacents[0].cost <= T {
         let a = adjacents.pop().unwrap();
         (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
         adjacents = generate_adjacents(&points, &adjacent_matrix);
         points_count = points.len();
     }
     // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
+    adjacents.sort();
     points_count = points.len();
     while points_count > L {
         let a = adjacents.pop().unwrap();

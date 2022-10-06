@@ -1,6 +1,8 @@
 use lambda_runtime::{service_fn, LambdaEvent, Error};
 use serde_json::{json, Value};
 
+use crate::main;
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let func = service_fn(func);

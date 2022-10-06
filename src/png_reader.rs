@@ -2,7 +2,6 @@ use base64::{decode, encode};
 use image::GenericImageView;
 use std::fs::File;
 use std::io::Read;
-use std::mem::size_of;
 
 pub fn get_color_data_from_filename(
     filename: &str,
@@ -128,25 +127,25 @@ pub fn get_gray_data_from_base64(filedata: String) -> Vec<Vec<usize>> {
 
 pub fn png_to_base64(filename: &str) -> String {
     let mut file_data = Vec::new();
-    let _f = File::open(filename).unwrap().read_to_end(&mut file_data);
+    let _ = File::open(filename).unwrap().read_to_end(&mut file_data);
 
     let encoded_data = encode(&file_data);
 
     encoded_data
 }
 
-pub fn get_base64_from_url(url: &str) -> String {
+pub fn get_base64_from_url(url: String) -> String {
     let query_start = url.find("?").unwrap();
     let data_start = url.find("img=").unwrap();
     let data_end = url.len();
 
     if query_start < data_start {
-        return slice_str(url, data_start, data_end);
+        return slice_str(url, data_start + 4, data_end);
     }
     String::new()
 }
 
-fn slice_str(s: &str, start: usize, end: usize) -> String {
+fn slice_str(s: String, start: usize, end: usize) -> String {
     let mut ret = String::new();
 
     for (i, c) in s.chars().enumerate() {
