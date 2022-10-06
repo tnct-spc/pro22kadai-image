@@ -17,7 +17,7 @@ const BLACK: &str = "　";
 const WHITE: &str = "鬱";
 
 fn main() {
-    let image = png_to_base64("./ThinkPhone.png");
+    let image = "png_hogehoge";
 
     let url = format!("https://hogehoge.com/?img={}", image);
 

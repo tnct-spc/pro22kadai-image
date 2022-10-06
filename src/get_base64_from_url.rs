@@ -24,12 +24,12 @@ pub fn get_bace64_from_specified_url(url: &str) -> std::string::String {
 pub fn get_base64_from_url(url: &str) -> String {
     let query_start = url.find("?").unwrap();
     let data_start = url.find("img=").unwrap();
-    let data_end = url.find("&").unwrap();
+    let data_end = url.len();
 
     if query_start < data_start {
         return slice_str(url, data_start, data_end);
     }
-    return String::new();
+    String::new()
 }
 
 fn slice_str(s: &str, start: usize, end: usize) -> String {
