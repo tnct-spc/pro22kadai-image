@@ -125,7 +125,6 @@ pub fn merge_points(
 ) -> (Vec<Coordinate>, Vec<Vec<usize>>) {
     let mut points = points;
     let mut adjacent_matrix = adjacent_matrix;
-    let mut points_count = points.len();
 
     let mut adjacents = generate_adjacents(&points, &adjacent_matrix);
     adjacents.sort();
@@ -135,15 +134,16 @@ pub fn merge_points(
         let a = adjacents.pop().unwrap();
         (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
         adjacents = generate_adjacents(&points, &adjacent_matrix);
-        points_count = points.len();
+        adjacents.sort();
     }
     // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
     adjacents.sort();
-    points_count = points.len();
+    let mut points_count = points.len();
     while points_count > L {
         let a = adjacents.pop().unwrap();
         (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
         adjacents = generate_adjacents(&points, &adjacent_matrix);
+        adjacents.sort();
         points_count = points.len();
     }
     println!("Merged Points");
@@ -215,13 +215,10 @@ fn get_adjacent_matrix_line(p1: usize, p2: usize, adjacent_matrix: &Vec<Vec<usiz
 
     let mut ret = Vec::<usize>::new();
 
-    for i in 0..q1 {
-        ret.push(adjacent_matrix[p1][i]);
-    }
-    for i in q1 + 1..q2 {
-        ret.push(adjacent_matrix[p1][i]);
-    }
-    for i in q2 + 1..q_max {
+    for i in 0..q_max {
+        if i == q1 || i == q2 {
+            continue;
+        }
         ret.push(adjacent_matrix[p1][i]);
     }
     ret.push(0);
