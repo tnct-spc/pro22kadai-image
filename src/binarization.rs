@@ -1,11 +1,7 @@
 // Vec[y][x]
 
-use std::vec;
-
 pub fn conv_to_line(img: &Vec<Vec<usize>>) -> Vec<usize> {
     let mut ret = Vec::new();
-    let x_max = img[0].len();
-    let y_max = img.len();
 
     for line in img {
         for d in line {
@@ -50,10 +46,10 @@ pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
         ret[i / x_max][i % x_max] = lut[p_src[i]];
     }
     // いちばん外側の4隅の画素が白だった場合，画素を反転する（背景が白画素の場合にいちばん外側に輪郭線が出現するのを防止するため）
-    if img[0][0] == 1
-        && img[0][x_max - 1] == 1
-        && img[y_max - 1][x_max - 1] == 1
-        && img[y_max - 1][0] == 1
+    if ret[0][0] > 0
+        && ret[0][x_max - 1] > 0
+        && ret[y_max - 1][x_max - 1] > 0
+        && ret[y_max - 1][0] > 0
     {
         for line in &mut ret {
             for x in line {
