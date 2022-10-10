@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 base64 = "0.13.0"
 image = "0.24.3"
-serde = "1.0.145"
-serde_json = "1.0.85"
+
+[lib]
+name = "procon22_image"
+crate-type = ["dylib"]

@@ -1,5 +1,3 @@
-use image::imageops::replace;
-
 use crate::Coordinate;
 
 const D: usize = 3;

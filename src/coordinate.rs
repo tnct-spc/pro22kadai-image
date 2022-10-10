@@ -1,4 +1,3 @@
-use serde::ser::{Serialize, SerializeStruct};
 use std::clone::Clone;
 use std::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use std::fmt::{Display, Formatter};
@@ -150,17 +149,5 @@ impl PartialOrd for Coordinate {
 impl Display for Coordinate {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-impl Serialize for Coordinate {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut s = serializer.serialize_struct("Coordiante", 2)?;
-        s.serialize_field("x", &self.x)?;
-        s.serialize_field("y", &self.y)?;
-        s.end()
     }
 }
