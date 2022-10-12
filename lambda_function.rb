@@ -1,5 +1,24 @@
 require 'rutie'
+require 'base64'
 
-Rutie.new(:pro22kadai_image, lib_path: 'target/release').init 'init_ffitest', __dir__
+def main
+  Rutie.new(:procon_image, lib_path: './target/release').init 'Init_GetPoints', __dir__
 
-put ffi_test.ffi_test('Hello, world!')
+  binary_data = File.read('./images/daruma_padd.png')
+  encoded_img = Base64.strict_encode64(binary_data)
+
+  ret = GetPoints.get_points(encoded_img)
+
+  print ret, "\n"
+end
+
+def lambda_handler(event:, context:)
+  Rutie.new(:procon_image, lib_path: './target/release').init 'Init_GetPoints', __dir__
+
+  binary_data = File.read('./images/daruma_padd.png')
+  encoded_img = Base64.strict_encode64(binary_data)
+
+  GetPoints.get_points(encoded_img)
+end
+
+main

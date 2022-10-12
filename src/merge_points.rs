@@ -153,7 +153,7 @@ pub fn merge_points(
         adjacents.sort();
         points_count = points.len();
     }
-    println!("Merged Points");
+    // println!("Merged Points");
     (points, adjacent_matrix)
 }
 
@@ -198,12 +198,12 @@ fn merge_two_points(
 
     let q_max = new_points.len();
 
-    println!("q_max: {}", q_max);
-    println!(
-        "adjacent_matrix len: ({}, {})",
-        new_adjacent_matrix.len(),
-        new_adjacent_matrix[0].len()
-    );
+    // println!("q_max: {}", q_max);
+    // println!(
+    //     "adjacent_matrix len: ({}, {})",
+    //     new_adjacent_matrix.len(),
+    //     new_adjacent_matrix[0].len()
+    // );
     for i in 0..q_max {
         if mid_adjacent_matrix_line[i] > 0 {
             let distance = distance(new_points[i], mid);

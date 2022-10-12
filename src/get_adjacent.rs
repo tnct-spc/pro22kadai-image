@@ -60,7 +60,7 @@ pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> V
     // let mut ret = Vec::<AdjacentPoints>::new();
     let mut ret = vec![vec![0; points_count]; points_count];
 
-    println!("{} Points are found", points_count);
+    // println!("{} Points are found", points_count);
 
     let mut past_directions = vec![100; points_count];
 
@@ -71,7 +71,7 @@ pub fn get_adjacent_matrix(points: &Vec<Coordinate>, img: &Vec<Vec<usize>>) -> V
         ret[i][target] = distance;
         ret[target][i] = distance;
     }
-    println!("Finished to get adjacent matrix");
+    // println!("Finished to get adjacent matrix");
     ret
 }
 
