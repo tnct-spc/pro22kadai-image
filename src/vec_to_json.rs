@@ -1,7 +1,7 @@
 use crate::coordinate::Coordinate;
 
 use serde::ser::{Serialize, SerializeStruct};
-use serde_json::{to_string, to_value};
+use serde_json::{to_value, Value};
 
 struct Response {
     adjacents: Vec<Vec<usize>>,
@@ -20,11 +20,11 @@ impl Serialize for Response {
     }
 }
 
-pub fn vec_to_json(points: Vec<Coordinate>, adjacent_matrix: Vec<Vec<usize>>) -> String {
+pub fn vec_to_json(points: Vec<Coordinate>, adjacent_matrix: Vec<Vec<usize>>) -> Value {
     let response = Response {
         coordinates: points,
         adjacents: adjacent_matrix,
     };
-    let ret = to_value(&response).unwrap().to_string();
+    let ret = to_value(&response).unwrap();
     ret
 }

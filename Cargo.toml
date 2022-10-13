@@ -7,11 +7,12 @@ edition = "2021"
 
 [dependencies]
 base64 = "0.13.0"
-image = "0.24.3"
-rutie = "0.8.4"
-serde = { version = "1.0.145", features = ["derive"] }
+image = "0.24.4"
+lambda_runtime = "0.7.0"
+serde = "1.0.145"
 serde_json = "1.0.86"
+tokio = { version = "1.21.2", features = ["full"] }
 
-[lib]
-name = "procon_image"
-crate-type = ["cdylib"]
+# [lib]
+# name = "procon_image"
+# crate-type = ["cdylib"]
