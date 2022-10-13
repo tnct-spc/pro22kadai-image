@@ -26,6 +26,13 @@ mod png_reader;
 // mod print;
 mod vec_to_json;
 
+fn main() {
+    let encoded_img = png_reader::png_to_base64("images/daruma_padd_ex.png");
+    let res = get_points(encoded_img).to_string();
+
+    println!("{}", res);
+}
+
 fn get_points(encoded_img: String) -> Value {
     let img = get_gray_data_from_base64(encoded_img);
     let mut img = binarize(img);
@@ -42,7 +49,7 @@ fn get_points(encoded_img: String) -> Value {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn lambda_handler() -> Result<(), Error> {
     let func = handler_fn(func);
     lambda_runtime::run(func).await?;
     Ok(())
