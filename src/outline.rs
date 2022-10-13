@@ -21,25 +21,37 @@ pub fn outline(img: &mut Vec<Vec<usize>>) {
             img[y][x] %= 2;
         }
     }
-    zero_padding(img);
 }
 
-fn zero_padding(img: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
-    let y_max = img.len() + 2;
-    let x_max = img[0].len() + 2;
+pub fn zero_padding(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+    let y_max = img.len();
+    let x_max = img[0].len();
 
-    let mut ret = vec![vec![0; x_max]; y_max];
+    let mut ret = Vec::new();
 
-    for y in 0..y_max {}
-
-    for y in 0..y_max {
-        ret[y][0] = 0;
-        ret[y][x_max - 1] = 0;
-    }
-
+    // 上の白ピクセルの行を作る
+    let mut ret_line = vec![0, 0];
     for x in 0..x_max {
-        ret[0][x] = 0;
-        ret[y_max - 1][x] = 0;
+        ret_line.push(0);
     }
+    ret.push(ret_line);
+
+    // 中の部分を作る
+    for y in 0..y_max {
+        let mut ret_line = vec![0];
+        for x in 0..x_max {
+            ret_line.push(img[y][x]);
+        }
+        ret_line.push(0);
+        ret.push(ret_line);
+    }
+
+    // 下の白ピクセルの行を作る
+    let mut ret_line = vec![0, 0];
+    for x in 0..x_max {
+        ret_line.push(0);
+    }
+    ret.push(ret_line);
+
     ret
 }

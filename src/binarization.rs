@@ -50,10 +50,14 @@ pub fn binarize(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
         && ret[0][x_max - 1] > 0
         && ret[y_max - 1][x_max - 1] > 0
         && ret[y_max - 1][0] > 0
+        && ret[1][1] > 0
+        && ret[1][x_max - 2] > 0
+        && ret[y_max - 2][x_max - 2] > 0
+        && ret[y_max - 2][1] > 0
     {
-        for line in &mut ret {
-            for x in line {
-                *x = (*x + 1) % 2;
+        for y in 0..y_max {
+            for x in 0..x_max {
+                ret[y][x] = (ret[y][x] + 1) % 2;
             }
         }
     }
