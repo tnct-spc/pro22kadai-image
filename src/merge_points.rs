@@ -131,16 +131,16 @@ pub fn merge_points(
     adjacents.sort();
 
     // 頂点間の距離がしきい値以下のものを結合する
-    // while adjacents[0].cost <= T {
-    //     if points.len() <= LOWER_LIMIT {
-    //         return (points, adjacent_matrix);
-    //     }
-    //     // let a = adjacents.pop().unwrap();
-    //     let a=adjacents[0];
-    //     (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
-    //     adjacents = generate_adjacents(&points, &adjacent_matrix);
-    //     adjacents.sort();
-    // }
+    while adjacents[0].cost <= T {
+        if points.len() <= LOWER_LIMIT {
+            return (points, adjacent_matrix);
+        }
+        // let a = adjacents.pop().unwrap();
+        let a = adjacents[0];
+        (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
+        adjacents = generate_adjacents(&points, &adjacent_matrix);
+        adjacents.sort();
+    }
     // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
     adjacents.sort();
     let mut points_count = points.len();
