@@ -1,12 +1,5 @@
-use serde::Deserialize;
-use serde_json::{json, Value};
-
-use axum::{
-    extract::Query,
-    response::IntoResponse,
-    routing::{get, post},
-    Json, Router,
-};
+use lambda_runtime::{handler_fn, Context, Error};
+use serde_json::Value;
 
 use binarization::binarize;
 use coordinate::Coordinate;
@@ -14,15 +7,14 @@ use corner_detector::{noize_erase, pick_corner_point, print_coordinates};
 use get_adjacent::get_adjacent_matrix;
 use labelling::{get_adjacent_matrix_from_label, labelling};
 use merge_points::merge_points;
-use outline::{outline, zero_padding};
+use outline::outline;
 use png_reader::{
     get_base64_from_url, get_color_data_from_base64, get_color_data_from_filename,
     get_gray_data_from_base64, get_gray_data_from_filename, png_to_base64,
 };
-use print::{
-    print_adjacent_matrix, print_adjacent_points, print_asterism, print_points, print_ptn,
-    print_vec,
-};
+// use print::print_adjacent_points;
+// use print::print_points;
+// use print::{print_adjacent_matrix, print_ptn, print_vec};
 use vec_to_json::vec_to_json;
 
 mod binarization;
@@ -33,9 +25,10 @@ mod labelling;
 mod merge_points;
 mod outline;
 mod png_reader;
-mod print;
+// mod print;
 mod vec_to_json;
 
+<<<<<<< HEAD
 // fn main() {
 //     let encoded_img = png_reader::png_to_base64("images/daruma_padd_ex.png");
 //     // adjacent_matrix_test(encoded_img);
@@ -68,6 +61,18 @@ async fn get_points(encoded_img: String) -> Value {
     // let img = get_gray_data_from_base64(encoded_img);
     // let img = binarize(img);
     let mut img = zero_padding(binarize(get_gray_data_from_base64(encoded_img)));
+=======
+fn main() {
+    let encoded_img = png_reader::png_to_base64("images/daruma_padd_ex.png");
+    let res = get_points(encoded_img).to_string();
+
+    println!("{}", res);
+}
+
+fn get_points(encoded_img: String) -> Value {
+    let img = get_gray_data_from_base64(encoded_img);
+    let mut img = binarize(img);
+>>>>>>> parent of e2cabf4 (ついに動いた)
     outline(&mut img);
     noize_erase(&mut img);
 
@@ -85,26 +90,15 @@ async fn get_points(encoded_img: String) -> Value {
     vec_to_json(points, adjacent_matrix)
 }
 
-#[derive(Deserialize)]
-struct PostParamater {
-    img: String,
-}
-
 #[tokio::main]
-async fn main() {
-    let app = Router::new().route("/", post(func));
-
-    let app = lambda_http::tower::ServiceBuilder::new()
-        .layer(axum_aws_lambda::LambdaLayer::default())
-        .service(app);
-
-    lambda_http::run(app).await.unwrap();
+async fn lambda_handler() -> Result<(), Error> {
+    let func = handler_fn(func);
+    lambda_runtime::run(func).await?;
+    Ok(())
 }
 
-async fn func(Json(params): Json<PostParamater>) -> impl IntoResponse {
-    let encoded_img = params.img;
+async fn func(event: Value, _: Context) -> Result<Value, Error> {
+    let encoded_img = event["img"].as_str().unwrap().to_string();
 
-    let res = get_points(encoded_img).await;
-
-    Json(res)
+    Ok(get_points(encoded_img))
 }

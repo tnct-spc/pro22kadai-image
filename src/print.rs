@@ -16,20 +16,6 @@ pub fn print_vec(ary: &Vec<Vec<usize>>) {
     }
 }
 
-pub fn print_asterism(points: &Vec<Coordinate>, y_max: usize, x_max: usize) {
-    let mut lut = vec![vec![BLACK; x_max]; y_max];
-
-    for p in points {
-        lut[(*p).y][(*p).x] = WHITE;
-    }
-    for y in 0..y_max {
-        for x in 0..x_max {
-            print!("{}", lut[y][x]);
-        }
-        println!();
-    }
-}
-
 pub fn print_ptn(ary: &Vec<Vec<usize>>) {
     for l in ary {
         for d in l {

@@ -7,7 +7,11 @@ use crate::get_adjacent::distance;
 
 const T: usize = 1; // 頂点間の距離がこれ以下だった場合は問答無用で結合
 const UPPER_LIMIT: usize = 50; // 頂点の最大数
+<<<<<<< HEAD
 const LOWER_LIMIT: usize = 3; // 頂点の最小数（これ以下だとマッチングでエラーを吐く）
+=======
+const LOWER_LIMIT: usize = 2;
+>>>>>>> parent of e2cabf4 (ついに動いた)
 
 // p1とp2の隣接行列から中点の隣接行列を良い感じに算出する
 // 頂点配列からp1とp2を消し，中点を追加する
@@ -137,6 +141,7 @@ pub fn merge_points(
     adjacents.sort();
 
     // 頂点間の距離がしきい値以下のものを結合する
+<<<<<<< HEAD
     // while adjacents[0].cost <= T {
     //     // print_adjacents(&adjacents);
     //     if points.len() <= LOWER_LIMIT {
@@ -149,6 +154,17 @@ pub fn merge_points(
     //     // adjacents.sort();
     //     // println!("{}", adjacents.len());
     // }
+=======
+    while adjacents[0].cost <= T {
+        if points.len() <= LOWER_LIMIT {
+            return (points, adjacent_matrix);
+        }
+        let a = adjacents.pop().unwrap();
+        (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
+        adjacents = generate_adjacents(&points, &adjacent_matrix);
+        adjacents.sort();
+    }
+>>>>>>> parent of e2cabf4 (ついに動いた)
     // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
     adjacents.sort();
     let mut points_count = points.len();
