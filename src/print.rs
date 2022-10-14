@@ -29,7 +29,7 @@ pub fn print_ptn(ary: &Vec<Vec<usize>>) {
 pub fn print_adjacent_matrix(adjacent_matrix: &Vec<Vec<usize>>) {
     for l in adjacent_matrix {
         for d in l {
-            print!("{}", *d);
+            print!("{:2}", *d);
         }
         println!();
     }
