@@ -36,9 +36,14 @@ const CORNER1: [[usize; D]; D] = [[0, 0, 0], [1, 1, 0], [0, 1, 0]];
 const CORNER2: [[usize; D]; D] = [[1, 0, 1], [0, 1, 0], [0, 0, 0]];
 
 // 1 0 0
+// 0 1 0
+// 1 0 0
+const CORNER3: [[usize; D]; D] = [[1, 0, 0], [0, 1, 0], [1, 0, 0]];
+
+// 1 0 0
 // 0 1 1
 // 0 0 0
-const CORNER3: [[usize; D]; D] = [[1, 0, 0], [0, 1, 1], [0, 0, 0]];
+const CORNER4: [[usize; D]; D] = [[1, 0, 0], [0, 1, 1], [0, 0, 0]];
 
 // 0 1 0    0 0 0
 // 1 1 1 => 1 1 1
@@ -65,7 +70,11 @@ pub fn pick_corner_point(img: &Vec<Vec<usize>>) -> Vec<Coordinate> {
     let r = apply_corner_filter(img, &CORNER3);
     ret = join_vec(ret, r);
 
+    let r = apply_corner_filter(img, &CORNER4);
+    ret = join_vec(ret, r);
+
     ret.sort();
+    ret.dedup();
 
     ret
 }
@@ -85,6 +94,26 @@ fn apply_corner_filter(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<C
     let filter = flip_filter_vertical(&filter);
     let ret = get_coordinates(img, &filter);
     let detected_points = join_vec(detected_points, ret);
+
+    let filter = flip_filter_horizontal(&filter);
+    let ret = get_coordinates(img, &filter);
+    let detected_points = join_vec(detected_points, ret);
+
+    detected_points
+}
+
+fn apply_corner_filter_v(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordinate> {
+    let detected_points = get_coordinates(img, filter);
+
+    let filter = flip_filter_vertical(&filter);
+    let ret = get_coordinates(img, &filter);
+    let detected_points = join_vec(detected_points, ret);
+
+    detected_points
+}
+
+fn apply_corner_filter_h(img: &Vec<Vec<usize>>, filter: &[[usize; D]; D]) -> Vec<Coordinate> {
+    let detected_points = get_coordinates(img, filter);
 
     let filter = flip_filter_horizontal(&filter);
     let ret = get_coordinates(img, &filter);

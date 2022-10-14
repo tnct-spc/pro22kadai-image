@@ -1,12 +1,13 @@
-use lambda_runtime::{handler_fn, Context, Error};
-use serde_json::Value;
+use axum::{extract::Query, response::IntoResponse, routing::post, Json, Router};
+use serde::Deserialize;
+use serde_json::{json, Value};
 
 use binarization::binarize;
 use coordinate::Coordinate;
 use corner_detector::{noize_erase, pick_corner_point, print_coordinates};
 use get_adjacent::get_adjacent_matrix;
 use merge_points::merge_points;
-use outline::outline;
+use outline::{outline, zero_padding};
 use png_reader::{
     get_base64_from_url, get_color_data_from_base64, get_color_data_from_filename,
     get_gray_data_from_base64, get_gray_data_from_filename, png_to_base64,
@@ -26,16 +27,17 @@ mod png_reader;
 // mod print;
 mod vec_to_json;
 
-// fn main() {
-//     let encoded_img = png_reader::png_to_base64("images/fedora_icon.png");
-//     let res = get_points(encoded_img).to_string();
+fn main() {
+    let encoded_img = png_reader::png_to_base64("images/daruma_padd.png");
+    let res = get_points(encoded_img).to_string();
 
-//     println!("{}", res);
-// }
+    println!("{}", res);
+}
 
-async fn get_points(encoded_img: String) -> Value {
+fn get_points(encoded_img: String) -> Value {
     // let img = get_gray_data_from_base64(encoded_img);
     // let img = binarize(img);
+    // let img = zero_padding(img);
     let mut img = zero_padding(binarize(get_gray_data_from_base64(encoded_img)));
     outline(&mut img);
     noize_erase(&mut img);
@@ -44,20 +46,26 @@ async fn get_points(encoded_img: String) -> Value {
 
     let adjacent_matrix = get_adjacent_matrix(&points, &img);
 
-    let (points, adjacent_matrix) = merge_points(points, adjacent_matrix);
+    // let (points, adjacent_matrix) = merge_points(points, adjacent_matrix);
 
     vec_to_json(points, adjacent_matrix)
 }
 
-#[tokio::main]
-async fn lambda_handler() -> Result<(), Error> {
-    let func = handler_fn(func);
-    lambda_runtime::run(func).await?;
-    Ok(())
-}
+// #[derive(Deserialize)]
+// pub struct PostParamater {
+//     img: String,
+// }
 
-async fn func(event: Value, _: Context) -> Result<Value, Error> {
-    let encoded_img = event["img"].as_str().unwrap().to_string();
+// #[tokio::main]
+// async fn main() {
+//     let app = Router::new().route("/", post(func));
+//     let app = lambda_http::tower::ServiceBuilder::new()
+//         .layer(axum_aws_lambda::LambdaLayer::default())
+//         .service(app);
 
-    Ok(get_points(encoded_img))
-}
+//     lambda_http::run(app).await.unwrap();
+// }
+
+// async fn func(Json(params): Json<PostParamater>) -> impl IntoResponse {
+//     Json(get_points(params.img).await)
+// }
