@@ -19,11 +19,18 @@ $ rustup default stable
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-### ビルドする
+### 実行する
 ```Bash
 $ git clone https://github.com/tnct-spc/pro22kadai-image -b main
 $ cd pro22kadai-image/
-$ make
 ```
 
-その後に，同じ階層にできた`lambda.zip`をAWSに上げてください．
+実行（必要に応じてビルドが入る）
+```Bash
+$ cargo run
+```
+
+ビルドするだけで実行はしない
+```Bash
+$ cargo build
+```
