@@ -28,19 +28,17 @@ mod outline;
 mod print;
 mod vec_to_json;
 
-// fn main() {
-//     let encoded_img = image_reader::png_to_base64("images/nut_logo.gif");
-//     let res = get_points(encoded_img);
+fn main() {
+    let encoded_img = image_reader::png_to_base64("images/daruma_padd_ex.png");
+    let res = get_points(encoded_img);
 
-//     println!("{}", res);
-// }
+    println!("{}", res);
+}
 
-async fn get_points(encoded_img: String) -> Value {
+fn get_points(encoded_img: String) -> Value {
     let img = get_gray_data_from_base64(encoded_img);
-    let mut img = binarize(img);
-    // let mut img = zero_padding(img);
-    // println!("height: {}, width: {}", img.len(), img[0].len());
-    // let mut img = zero_padding(binarize(get_gray_data_from_base64(encoded_img)));
+    let img = binarize(img);
+    let mut img = zero_padding(img);
     outline(&mut img);
     noize_erase(&mut img);
 
@@ -55,22 +53,22 @@ async fn get_points(encoded_img: String) -> Value {
     vec_to_json(points, adjacent_matrix)
 }
 
-#[derive(Deserialize)]
-pub struct PostParamater {
-    img: String,
-}
+// #[derive(Deserialize)]
+// pub struct PostParamater {
+//     img: String,
+// }
 
-#[tokio::main]
-async fn main() {
-    let app = Router::new().route("/", post(func));
-    let app = lambda_http::tower::ServiceBuilder::new()
-        .layer(axum_aws_lambda::LambdaLayer::default())
-        .service(app);
+// #[tokio::main]
+// async fn main() {
+//     let app = Router::new().route("/", post(func));
+//     let app = lambda_http::tower::ServiceBuilder::new()
+//         .layer(axum_aws_lambda::LambdaLayer::default())
+//         .service(app);
 
-    lambda_http::run(app).await.unwrap();
-}
+//     lambda_http::run(app).await.unwrap();
+// }
 
-async fn func(Json(params): Json<PostParamater>) -> impl IntoResponse {
-    // Json(get_points(params.img).await)
-    Json(get_points(params.img).await)
-}
+// async fn func(Json(params): Json<PostParamater>) -> impl IntoResponse {
+//     // Json(get_points(params.img).await)
+//     Json(get_points(params.img).await)
+// }

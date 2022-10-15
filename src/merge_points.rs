@@ -127,7 +127,8 @@ pub fn merge_points(
     let mut points = points;
     let mut adjacent_matrix = adjacent_matrix;
 
-    let mut adjacents = generate_adjacents(&points, &adjacent_matrix);
+    // let mut adjacents = generate_adjacents(&points, &adjacent_matrix);
+    let mut adjacents = generate_distance_list(&points);
     adjacents.sort();
 
     // 頂点間の距離がしきい値以下のものを結合する
@@ -138,7 +139,8 @@ pub fn merge_points(
         // let a = adjacents.pop().unwrap();
         let a = adjacents[0];
         (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
-        adjacents = generate_adjacents(&points, &adjacent_matrix);
+        // adjacents = generate_adjacents(&points, &adjacent_matrix);
+        adjacents = generate_distance_list(&points);
         adjacents.sort();
     }
     // 頂点の数がしきい値以下になるまで頂点を距離が近い順に結合する
@@ -151,7 +153,8 @@ pub fn merge_points(
         // let a = adjacents.pop().unwrap();
         let a = adjacents[0];
         (points, adjacent_matrix) = merge_two_points(a.p, a.q, points, adjacent_matrix);
-        adjacents = generate_adjacents(&points, &adjacent_matrix);
+        // adjacents = generate_adjacents(&points, &adjacent_matrix);
+        adjacents = generate_distance_list(&points);
         adjacents.sort();
         points_count = points.len();
     }
@@ -172,6 +175,18 @@ fn generate_adjacents(
             if adjacent_matrix[i][j] > 0 {
                 ret.push(Adjacent::init(i, j, adjacent_matrix[i][j]));
             }
+        }
+    }
+    ret
+}
+
+fn generate_distance_list(points: &Vec<Coordinate>) -> Vec<Adjacent> {
+    let points_count = points.len();
+    let mut ret = Vec::new();
+
+    for j in 0..points_count {
+        for i in j..points_count {
+            ret.push(Adjacent::init(i, j, distance(points[i], points[j])));
         }
     }
     ret

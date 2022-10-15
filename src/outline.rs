@@ -29,15 +29,10 @@ pub fn zero_padding(img: Vec<Vec<usize>>) -> Vec<Vec<usize>> {
 
     let mut ret = vec![vec![0; x_max]; y_max];
 
-    for y in 0..y_max {}
-
-    for y in 0..y_max {
-        ret[y][0] = 0;
-        ret[y][x_max - 1] = 0;
-    }
-    for x in 0..x_max {
-        ret[0][x] = 0;
-        ret[y_max - 1][x] = 0;
+    for y in 1..y_max - 1 {
+        for x in 1..x_max - 1 {
+            ret[y][x] = img[y - 1][x - 1];
+        }
     }
     ret
 }
